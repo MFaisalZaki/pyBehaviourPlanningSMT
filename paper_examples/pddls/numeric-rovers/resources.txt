@@ -1,0 +1,2 @@
+(:function energy_rover0 0 100 10)
+(:function recharges 0 100 10)
