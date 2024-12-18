@@ -10,10 +10,17 @@ class DimensionConstructorSMT:
         self.encodings = []
         self.logs = []
 
+        self.__process__(encoder)
         self.__encode__(encoder)
     
     def __len__(self):
         return len(self.var_domain)
+
+    def __process__(self, encoder):
+        """! 
+        This function should process the additional information.
+        """
+        pass
 
     def __encode__(self, encoder):
         """!

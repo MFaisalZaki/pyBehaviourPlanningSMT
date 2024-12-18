@@ -25,13 +25,14 @@ class ForbidMode(Enum):
 class ForbidBehaviourIterativeSMT:
     def __init__(self, task, bspace_cfg, planner_cfg):
         
-        self.base_planner         = planner_cfg
-        self.solver_timeout       = bspace_cfg.get('solver-timeout-ms', 300000)
-        self.solver_memorylimit   = bspace_cfg.get('solver-memorylimit-mb', 16000)
-        self.compilationlist      = bspace_cfg.get('compliation-list', [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING], ["fast-downward-reachability-grounder", CompilationKind.GROUNDING]])
-        self.behaviour_only       = bspace_cfg.get('behaviours-only', False)
-        self.ignore_seed_plan     = bspace_cfg.get('ignore-seed-plan', False)
-        self._is_oversubscription = False
+        self.base_planner             = planner_cfg
+        self.solver_timeout           = bspace_cfg.get('solver-timeout-ms', 300000)
+        self.solver_memorylimit       = bspace_cfg.get('solver-memorylimit-mb', 16000)
+        self.compilationlist          = bspace_cfg.get('compliation-list', [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING], ["fast-downward-reachability-grounder", CompilationKind.GROUNDING]])
+        self.behaviour_only           = bspace_cfg.get('behaviours-only', False)
+        self.ignore_seed_plan         = bspace_cfg.get('ignore-seed-plan', False)
+        self.use_fixed_length_formula = bspace_cfg.get('use_fixed_length_formula', False)
+        self._is_oversubscription     = False
         
         # initialise fluents.
         initialize_fluents(task)
@@ -45,11 +46,9 @@ class ForbidBehaviourIterativeSMT:
         self.diverse_plans = []
         self.diverse_plans_actions_sequence = set()
 
-        if len(self.base_planner) != 0:
-            self._init_using_planner(self.compiled_task, bspace_cfg)
-        else:
-            self._init_using_fixed_length(self.compiled_task, bspace_cfg)
-        
+        if self.use_fixed_length_formula: self._init_using_fixed_length(self.compiled_task, bspace_cfg)
+        else: self._init_using_planner(self.compiled_task, bspace_cfg)
+            
     def plan(self, required_plancount = sys.maxsize):
         # Try to generate plans that are diverse in terms of behaviours.
         self.core(ForbidMode.BEHAVIOUR, required_plancount)
@@ -219,7 +218,7 @@ class ForbidBehaviourIterativeSMT:
     
 
     def _init_using_fixed_length(self, task, bspace_cfg):
-        assert False, 'Not implemented yet.'
+        # assert False, 'Not implemented yet.'
         # Construct the behaviour space
         self.bspace = BehaviourSpaceSMT(task, bspace_cfg)
         # Get the same context as the behaviour space.
