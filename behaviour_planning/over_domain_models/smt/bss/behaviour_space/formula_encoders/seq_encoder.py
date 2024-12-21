@@ -16,7 +16,7 @@ from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encod
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.smt_sequential_plan import SMTSequentialPlan
 
 # append some extra functions to the EncoderSequential.
-def encode_n(self, formula_length, disable_after_goal_state_actions):
+def encode_n(self, **kwargs):
     """!
     This method encodes a formula into a list of assertions.
 
@@ -38,6 +38,10 @@ def encode_n(self, formula_length, disable_after_goal_state_actions):
     Returns:
     list: The list of assertions resulting from the encoding.
     """
+    formula_length = kwargs.get('formula_length', None)
+    assert formula_length is not None, 'formula_length is required to encode the formula.'
+    disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
+
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
 
     self.goal_states = []
@@ -69,18 +73,18 @@ def encode_n(self, formula_length, disable_after_goal_state_actions):
     
     # deny any empty steps.
     t_minus_1_actions_vars = self.get_actions_vars(0)
-    for t in range(1, len(self)):
+    for t in range(1, len(self)-1):
         t_actions_vars = self.get_actions_vars(t)
         self.assertions.append(z3.Implies(z3.Or(t_actions_vars), z3.PbEq([(a, 1) for a in t_minus_1_actions_vars], 1)))
         t_minus_1_actions_vars = copy(t_actions_vars)
 
     # add the extection sematics.
-    for t in range(0, self.formula_length-1):
+    for t in range(0, len(self)-1):
         actions = list(map(lambda x: x[t], self.up_actions_to_z3.values()))
         self.assertions.append(z3.PbLe([(var, 1) for var in actions], 1))
 
     # disable the actions in the last step of the formula.
-    last_step_actions = list(map(lambda x: x[self.formula_length-1], self.up_actions_to_z3.values()))
+    last_step_actions = list(map(lambda x: x[len(self)-1], self.up_actions_to_z3.values()))
     #self.assertions.append(z3.PbEq([(var, 1) for var in last_step_actions], 0, ctx=self.ctx))
     self.assertions.append(z3.Not(z3.Or(last_step_actions), ctx=self.ctx))
 

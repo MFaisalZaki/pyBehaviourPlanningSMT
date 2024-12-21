@@ -12,7 +12,7 @@ from pypmt.encoders.SequentialQFUF import EncoderSequentialQFUF
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.smt_sequential_plan import SMTSequentialPlan
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.common import extend
 
-def encode_n(self, formula_length, disable_after_goal_state_actions):
+def encode_n(self, **kwargs):
     """!
     This method encodes a formula into a list of assertions.
 
@@ -34,6 +34,10 @@ def encode_n(self, formula_length, disable_after_goal_state_actions):
     Returns:
     list: The list of assertions resulting from the encoding.
     """
+    formula_length = kwargs.get('formula_length', None)
+    assert formula_length is not None, 'formula_length is required to encode the formula.'
+    disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
+
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
 
     self.goal_states = []
@@ -150,7 +154,7 @@ def enabled_actions_vars(self):
     nop_action = self.z3_actions_mapping[InstantaneousAction('nop')]
     all_actions = [
         z3.If(self.z3_action_variable(z3.IntVal(t, ctx=self.ctx)) != nop_action, z3.IntVal(1, ctx=self.ctx), z3.IntVal(0, ctx=self.ctx))
-        for t in range(0, self.formula_length)
+        for t in range(0, len(self))
     ]
     return all_actions
 

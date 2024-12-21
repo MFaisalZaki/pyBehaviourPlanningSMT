@@ -34,8 +34,12 @@ class BehaviourSpaceSMT:
         self._behaviour_frequency = defaultdict(dict)
         self._plans = []
 
-        self.encoder.encode_n(self.upper_bound, 
-                              self.disable_after_goal_state_actions)
+        args = {
+            'formula_length': self.upper_bound, 
+            'disable_after_goal_state_actions': self.disable_after_goal_state_actions
+        }
+
+        self.encoder.encode_n(**args)
         
         self.dims  = cfg.get('dims', [])
         

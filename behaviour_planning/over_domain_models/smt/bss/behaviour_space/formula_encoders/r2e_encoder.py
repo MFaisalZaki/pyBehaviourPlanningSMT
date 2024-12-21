@@ -14,7 +14,7 @@ from pypmt.encoders.utilities import str_repr, varstr_repr
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.common import actions_that_uses_resource, disable_actions_at_t, enabled_actions_vars, get_actions_vars, extend, convert, get_all_action_vars
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.smt_sequential_plan import SMTSequentialPlan
 
-def encode_n(self, formula_length, disable_after_goal_state_actions):
+def encode_n(self, **kwargs):
     """!
     This method encodes a formula into a list of assertions.
 
@@ -36,6 +36,10 @@ def encode_n(self, formula_length, disable_after_goal_state_actions):
     Returns:
     list: The list of assertions resulting from the encoding.
     """
+
+    formula_length = kwargs.get('formula_length', None)
+    assert formula_length is not None, 'formula_length is required to encode the formula.'
+    disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
 
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
     assert not self.task_is_oversubscription_planning, 'The relaxed to exists encoder does not support oversubscription planning.'
