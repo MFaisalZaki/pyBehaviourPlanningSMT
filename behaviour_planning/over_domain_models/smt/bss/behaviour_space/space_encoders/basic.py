@@ -26,17 +26,15 @@ class BehaviourSpaceSMT:
         self.task    = task.problem
         self.encodername = cfg.get('encoder', 'seq')
         self.encoder = encoder_map[self.encodername](self.task)
-
-        self.upper_bound            = cfg.get('upper-bound', 50)
         self.run_plan_validation    = cfg.get('run-plan-validation', False)
-        self.disable_after_goal_state_actions = cfg.get('disable-after-goal-state-actions', False)
         
         self._behaviour_frequency = defaultdict(dict)
         self._plans = []
 
         args = {
-            'formula_length': self.upper_bound, 
-            'disable_after_goal_state_actions': self.disable_after_goal_state_actions
+            'formula_length': cfg.get('upper-bound', 50), 
+            'disable_after_goal_state_actions': cfg.get('disable-after-goal-state-actions', False),
+            'horizon_planning': cfg.get('horizon-planning', False),
         }
 
         self.encoder.encode_n(**args)

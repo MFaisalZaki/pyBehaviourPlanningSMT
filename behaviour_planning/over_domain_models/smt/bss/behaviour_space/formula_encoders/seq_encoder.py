@@ -41,6 +41,7 @@ def encode_n(self, **kwargs):
     formula_length = kwargs.get('formula_length', None)
     assert formula_length is not None, 'formula_length is required to encode the formula.'
     disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
+    horizon_planning = kwargs.get('horizon_planning', False)
 
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
 
@@ -88,20 +89,22 @@ def encode_n(self, **kwargs):
     #self.assertions.append(z3.PbEq([(var, 1) for var in last_step_actions], 0, ctx=self.ctx))
     self.assertions.append(z3.Not(z3.Or(last_step_actions), ctx=self.ctx))
 
-    # update the goal_states for oversubscription planning.
-    _fn = z3.Or if self.task_is_oversubscription_planning else z3.And
-    self.goal_states = list(map(lambda x: _fn(x.children()), self.goal_states))
-
     # encode possible goal states.
-    # self.assertions.append(z3.PbGe([(g,1) for g in self.goal_states], 1))
-    self.assertions.append(z3.Or(self.goal_states))
+    if horizon_planning:
+        self.horizon_var = z3.IntVal(len(self)-1, ctx=self.ctx)
+    else:
+        # update the goal_states for oversubscription planning.
+        _fn = z3.Or if self.task_is_oversubscription_planning else z3.And
+        self.goal_states = list(map(lambda x: _fn(x.children()), self.goal_states))
 
-    # locate the first goal state step.
-    offset = 0 if self.task_is_oversubscription_planning else 1
-    for idx, goal_state in enumerate(self.goal_states):
-        # pre_goal_states = [goal_state] + [z3.Not(s, ctx=self.ctx) for s in self.goal_states[:idx]]
-        pre_goal_states = [goal_state] if idx == 0 else [goal_state, z3.Not(z3.Or(self.goal_states[:idx]), ctx=self.ctx)]
-        self.assertions.append(z3.And(pre_goal_states) == (self.horizon_var == z3.IntVal(idx+offset, ctx=self.ctx)))
+        # encode possible goal states.
+        self.assertions.append(z3.Or(self.goal_states))
+
+        # locate the first goal state step.
+        offset = 0 if self.task_is_oversubscription_planning else 1
+        for idx, goal_state in enumerate(self.goal_states):
+            pre_goal_states = [goal_state] if idx == 0 else [goal_state, z3.Not(z3.Or(self.goal_states[:idx]), ctx=self.ctx)]
+            self.assertions.append(z3.And(pre_goal_states) == (self.horizon_var == z3.IntVal(idx+offset, ctx=self.ctx)))
 
     # we need to check this, since in the case of appending plans, 
     # we could get plans that undo goal states to add more actions.

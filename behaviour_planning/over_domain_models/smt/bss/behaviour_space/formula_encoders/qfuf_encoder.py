@@ -37,6 +37,7 @@ def encode_n(self, **kwargs):
     formula_length = kwargs.get('formula_length', None)
     assert formula_length is not None, 'formula_length is required to encode the formula.'
     disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
+    horizon_planning = kwargs.get('horizon_planning', False)
 
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
 
@@ -92,19 +93,22 @@ def encode_n(self, **kwargs):
     # disable actions for the last step.
     self.assertions.append(self.z3_action_variable(z3.IntVal(formula_length, ctx=self.ctx)) == nop_action_var)
 
-    # update the goal_states for oversubscription planning.
-    _fn = z3.Or if self.task_is_oversubscription_planning else z3.And
-    self.goal_states = list(map(lambda x: _fn(x.children()), self.goal_states))
+    if horizon_planning:
+        self.horizon_var = z3.IntVal(len(self)-1, ctx=self.ctx)
+    else:
+        # update the goal_states for oversubscription planning.
+        _fn = z3.Or if self.task_is_oversubscription_planning else z3.And
+        self.goal_states = list(map(lambda x: _fn(x.children()), self.goal_states))
 
-    # locate the first goal state step.
-    offset = 0 if self.task_is_oversubscription_planning else 1
-    for idx, goal_state in enumerate(self.goal_states):
-        pre_goal_states = [goal_state] + [z3.Not(s, ctx=self.ctx) for s in self.goal_states[:idx]]
-        self.assertions.append(z3.And(pre_goal_states) == (self.horizon_var == z3.IntVal(idx+offset, ctx=self.ctx)))
+        # encode possible goal states.
+        self.assertions.append(z3.PbGe([(g,1) for g in self.goal_states], 1))
 
-    # encode possible goal states.
-    self.assertions.append(z3.PbGe([(g,1) for g in self.goal_states], 1))
-    
+        # locate the first goal state step.
+        offset = 0 if self.task_is_oversubscription_planning else 1
+        for idx, goal_state in enumerate(self.goal_states):
+            pre_goal_states = [goal_state] + [z3.Not(s, ctx=self.ctx) for s in self.goal_states[:idx]]
+            self.assertions.append(z3.And(pre_goal_states) == (self.horizon_var == z3.IntVal(idx+offset, ctx=self.ctx)))
+
     # make sure that once a goal state is reached we don't get any more actions.
     if not disable_after_goal_state_actions:
         for tstep, goal_state in enumerate(self.goal_states):
