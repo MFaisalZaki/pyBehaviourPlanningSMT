@@ -42,6 +42,7 @@ def encode_n(self, **kwargs):
     assert formula_length is not None, 'formula_length is required to encode the formula.'
     disable_after_goal_state_actions = kwargs.get('disable_after_goal_state_actions', False)
     horizon_planning = kwargs.get('horizon_planning', False)
+    skip_actions = kwargs.get('skip_actions', False)
 
     self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
 
@@ -85,9 +86,10 @@ def encode_n(self, **kwargs):
         t_minus_1_actions_vars = copy(t_actions_vars)
 
     # add the extection sematics.
-    for t in range(0, len(self)-1):
-        actions = list(map(lambda x: x[t], self.up_actions_to_z3.values()))
-        self.assertions.append(z3.PbLe([(var, 1) for var in actions], 1))
+    if not skip_actions:
+        for t in range(0, len(self)-1):
+            actions = list(map(lambda x: x[t], self.up_actions_to_z3.values()))
+            self.assertions.append(z3.PbLe([(var, 1) for var in actions], 1))
 
     # disable the actions in the last step of the formula.
     last_step_actions = list(map(lambda x: x[len(self)-1], self.up_actions_to_z3.values()))

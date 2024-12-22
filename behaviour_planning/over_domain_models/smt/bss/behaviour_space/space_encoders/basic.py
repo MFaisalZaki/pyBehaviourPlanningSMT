@@ -35,6 +35,7 @@ class BehaviourSpaceSMT:
             'formula_length': cfg.get('upper-bound', 50), 
             'disable_after_goal_state_actions': cfg.get('disable-after-goal-state-actions', False),
             'horizon_planning': cfg.get('horizon-planning', False),
+            'skip_actions' : cfg.get('skip-actions', False)
         }
 
         self.encoder.encode_n(**args)
