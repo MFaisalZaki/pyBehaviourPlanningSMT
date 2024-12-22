@@ -49,10 +49,15 @@ def encode_n(self, **kwargs):
     self.assertions = []
     self.goal_predicates_vars = defaultdict(dict)
 
+    flatten_args = lambda expr: [expr] if not (z3.is_and(expr) or z3.is_or(expr)) else [arg for child in expr.children() for arg in flatten_args(child)]
     for t in range(0, formula_length):
         formula = self.encode(t)
+        nested_and = all([z3.is_and(p) for p in formula['goal'].children()])
+        nested_or  = all([z3.is_or(p) for p in formula['goal'].children()])
+        _fn = z3.And if nested_and else z3.Or
         # strip the extra And if available in formula['goal']
-        self.goal_states.append(formula['goal'] if not 'And(' in str(formula['goal'].arg(0)) else formula['goal'].arg(0))
+        self.goal_states.append(_fn(flatten_args(formula['goal'])) if (nested_and or nested_or) else formula['goal'])
+        # self.goal_states.append(formula['goal'] if not 'And(' in str(formula['goal'].arg(0)) else formula['goal'].arg(0))
         if t == 0: self.assertions.append(formula['initial'])
         del formula['goal']
         del formula['initial']
