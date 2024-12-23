@@ -58,7 +58,8 @@ class ForbidBehaviourIterativeSMT:
            (not self.behaviour_only):
             self.core(ForbidMode.PLAN, required_plancount)
         # return the plans to the lifted task.
-        return list(map(lambda p: p.plan.replace_action_instances(self.compiled_task.map_back_action_instance), self.diverse_plans))
+        return [self._lift_plan(p, p.behaviour) for p in self.diverse_plans]
+        # return list(map(lambda p: p.plan.replace_action_instances(self.compiled_task.map_back_action_instance), self.diverse_plans))
     
     def core(self, forbid_mode, required_plancount):
 
@@ -117,6 +118,14 @@ class ForbidBehaviourIterativeSMT:
         ret_logs['bspace-logs']  = self.bspace.logs() if self.bspace is not None else 'bspace is None.'
         ret_logs['bspace-stats'] = compute_behaviour_space_statistics_smt(self.diverse_plans, self.bspace) if self.bspace is not None else 'bspace is None.'
         return ret_logs
+
+    def _flatten_expr(self, expr): 
+        return [expr] if not (z3.is_and(expr) or z3.is_or(expr)) else [arg for child in expr.children() for arg in self._flatten_expr(child)]
+
+    def _lift_plan(self, plan, behaviour):
+        plan = plan.plan.replace_action_instances(self.compiled_task.map_back_action_instance)
+        setattr(plan, 'behaviour', ' ^ '.join(list(map(lambda s : f'({str(s)})', self._flatten_expr(behaviour)))))
+        return plan
 
     def _compile(self, task, compilationlist):
         oversubscription_metrics = list(filter(lambda metric:     isinstance(metric, Oversubscription), task.quality_metrics))

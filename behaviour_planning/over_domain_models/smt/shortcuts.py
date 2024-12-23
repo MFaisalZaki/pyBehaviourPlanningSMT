@@ -5,6 +5,7 @@ from behaviour_planning.over_domain_models.smt.bss.behaviour_features_library.co
 from behaviour_planning.over_domain_models.smt.bss.behaviour_features_library.resource_count import ResourceCountSMT
 from behaviour_planning.over_domain_models.smt.bss.behaviour_features_library.functions import FunctionsSMT
 from behaviour_planning.over_domain_models.smt.bss.behaviour_features_library.utility_value import UtilityValueSMT
+from behaviour_planning.over_domain_models.smt.bss.behaviour_features_library.utility_set import UtilitySetSMT
 
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.space_encoders.basic import BehaviourSpaceSMT
 from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_count import BehaviourCountSMT
