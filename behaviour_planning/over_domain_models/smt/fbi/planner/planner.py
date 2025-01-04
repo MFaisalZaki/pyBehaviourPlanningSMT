@@ -139,6 +139,8 @@ class ForbidBehaviourIterativeSMT:
         with Compiler(names=names, compilation_kinds=compilationkinds) as compiler:
             compiled_task = compiler.compile(task)
 
+        assert len(compiled_task.problem.actions) > 0, 'No actions in the compiled task.'
+
         # add the oversubscription metric back to the task.
         for metric in oversubscription_metrics: compiled_task.problem.add_quality_metric(metric)
 
