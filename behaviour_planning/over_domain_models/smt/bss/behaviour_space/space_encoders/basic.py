@@ -142,7 +142,7 @@ class BehaviourSpaceSMT:
         behaviour_vars = []
         for dimname, dim in self.dims.items():
             behaviour_vars.append(dim.behaviour_expression(model))
-        return z3.And(behaviour_vars) if len(behaviour_vars) > 0 else None
+        return z3.And(list(filter(lambda e: e is not  None, behaviour_vars))) if len(behaviour_vars) > 0 else None
 
     def plan_behaviour(self, plan:SequentialPlan, i=1, return_plan=True):
         """!
