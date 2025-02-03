@@ -13,6 +13,7 @@ from pypmt.encoders.utilities import str_repr, varstr_repr
 
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.common import actions_that_uses_resource, disable_actions_at_t, enabled_actions_vars, get_actions_vars, extend, convert, get_all_action_vars
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.smt_sequential_plan import SMTSequentialPlan
+from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.utilities import flattern_expression
 
 def encode_n(self, **kwargs):
     """!
@@ -55,8 +56,9 @@ def encode_n(self, **kwargs):
         nested_or  = all([z3.is_or(p) for p in formula['goal'].children()])
         _fn = z3.And if nested_and else z3.Or
         # strip the extra And if available in formula['goal']
-        self.goal_states.append(_fn(flatten_args(formula['goal'])) if (nested_and or nested_or) else formula['goal'])
+        # self.goal_states.append(_fn(flatten_args(formula['goal'])) if (nested_and or nested_or) else formula['goal'])
         # self.goal_states.append(formula['goal'] if not 'And(' in str(formula['goal'].arg(0)) else formula['goal'].arg(0))
+        self.goal_states.append(flattern_expression(formula['goal']))
         if t == 0: self.assertions.append(formula['initial'])
         del formula['goal']
         del formula['initial']
