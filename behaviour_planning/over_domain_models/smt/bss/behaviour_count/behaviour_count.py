@@ -9,8 +9,10 @@ from pypmt.apis import initialize_fluents
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.space_encoders.basic import BehaviourSpaceSMT
 
 class BehaviourCountSMT:
-    def __init__(self, domain, problem, bspace_cfg, planlist, is_oversubscription_planning=False):
+    def __init__(self, domain, problem, bspace_cfg, planlist, is_oversubscription_planning=False, compilationlist=[['up_quantifiers_remover', CompilationKind.QUANTIFIERS_REMOVING], ['fast-downward-reachability-grounder', CompilationKind.GROUNDING]]):
         
+        self.compilationlist = compilationlist
+
         # read the planning task.
         planningtask = PDDLReader().parse_problem(domain, problem)
         
@@ -47,19 +49,12 @@ class BehaviourCountSMT:
             if self.count() >= select_k: break
 
     def _prepare_task(self, planningtask, is_oversubscription_planning):
-        # initialize the fluents.
-        compiler_names = ['up_quantifiers_remover']
-        if planningtask.kind.has_numeric_fluents() or\
-           planningtask.kind.has_general_numeric_planning() or\
-           planningtask.kind.has_simple_numeric_planning() or\
-           planningtask.kind.has_real_fluents():
-            initialize_fluents(planningtask)
-            compiler_names.append('up_grounder')
-        else:
-            compiler_names.append('fast-downward-reachability-grounder')
-        
+        # initialize the fluents.        
+        initialize_fluents(planningtask)
+        compiler_names = list(map(lambda e: e[0], self.compilationlist))
+        compilation_kinds = list(map(lambda e: e[1], self.compilationlist))
+
         # ground the problem.
-        compilation_kinds = [CompilationKind.QUANTIFIERS_REMOVING, CompilationKind.GROUNDING]
         with Compiler(names = compiler_names, compilation_kinds = compilation_kinds) as grounder:
             gr_result = grounder.compile(planningtask)
        
