@@ -40,7 +40,17 @@ def compute_behaviour_space_statistics_smt(_diverseplans, _bspace):
 
     retstats['dims-domains'] = defaultdict(dict)
     for name, _dim in _bspace.dims.items():
-        retstats['dims-domains'][_dim.name] = list(_dim.var_domain)
+        if isinstance(_dim.var_domain, defaultdict):
+            for key, value in _dim.var_domain.items():
+                if isinstance(value, set):
+                    retstats['dims-domains'][_dim.name][key] = list(value)
+                else:
+                    retstats['dims-domains'][_dim.name][key] = value
+        elif isinstance(_dim.var_domain, set):
+            retstats['dims-domains'][_dim.name] = list(_dim.var_domain)
+        else:
+            retstats['dims-domains'][_dim.name] = list(_dim.var_domain)
+        
 
     #retstats['plans-details'] = plansdetails
     retstats['bspace-stats']  = _bspace._behaviour_frequency

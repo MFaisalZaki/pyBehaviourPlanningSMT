@@ -1,5 +1,8 @@
 import sys
 import unified_planning as up
+
+from collections import defaultdict
+
 from unified_planning.io import PDDLReader, PDDLWriter
 from unified_planning.shortcuts import Compiler, CompilationKind, OperatorKind
 from unified_planning.plans import ActionInstance
@@ -17,17 +20,16 @@ class BehaviourCountSMT:
         planningtask = PDDLReader().parse_problem(domain, problem)
         
         # compiled task.
-        gr_result = self._prepare_task(planningtask, is_oversubscription_planning)
+        self.gr_result = self._prepare_task(planningtask, is_oversubscription_planning)
+        self.task = self.gr_result.problem
 
         # update the behaviour space configuration parameters.
         self._update_bspace_cfg(bspace_cfg, is_oversubscription_planning)
         
         # recompile the plans to the grounded problem.
         # recheck this if the results of fi planner are not as expected.
-        # convert the planlist to a list of plans.
-        #planlist = list(map(lambda p: PDDLReader().parse_plan_string(planningtask, p), set(planlist)))
         # TODO: We need to find a better way to get the plans.
-        updated_planlist = list(map(lambda p: PDDLReader().parse_plan_string(gr_result.problem,  PDDLWriter(gr_result.problem).get_plan(PDDLReader().parse_plan_string(planningtask, p)).replace(' ', '_')), planlist))
+        updated_planlist = list(map(lambda p: PDDLReader().parse_plan_string(self.task,  PDDLWriter(self.task).get_plan(PDDLReader().parse_plan_string(planningtask, p)).replace(' ', '_')), planlist))
         
         # compute the maximum plan length
         bspace_cfg['upper-bound'] = max(map(lambda p: len(p.actions), updated_planlist))
@@ -37,14 +39,16 @@ class BehaviourCountSMT:
         bspace_cfg['run-plan-validation'] = False
 
         # initialize the behaviour space.
-        self.bspace = BehaviourSpaceSMT(gr_result, bspace_cfg)
+        self.bspace = BehaviourSpaceSMT(self.gr_result, bspace_cfg)
         # check if we are optimising on behaviour count.
         select_k = bspace_cfg.get('select-k', sys.maxsize)
         # compute behaviour count.
         self.colleted_behaviours = set()
+        self.selected_plans_list = defaultdict(list)
         for i, plan in enumerate(updated_planlist):
             ret = self.bspace.plan_behaviour(plan, i=i, return_plan=False)
             if ret is None: self.bspace.log_msg.append(f'Plan {i} is not satisfiable.')
+            self.selected_plans_list[ret].append(plan)
             self.colleted_behaviours.add(ret)
             if self.count() >= select_k: break
 
@@ -87,9 +91,18 @@ class BehaviourCountSMT:
         for idx, dim_additional_information in additional_information_updates:
             bspace_cfg['dims'][idx][1] = dim_additional_information
 
-
     def count(self):
         return len(self.colleted_behaviours)
     
+    def selected_plans(self, k):
+        ret_plans = []
+        cpy_plans_list = self.selected_plans_list.copy()
+        while len(ret_plans) < k:
+            for key in cpy_plans_list.keys():
+                if len(ret_plans) >= k: break
+                if len(cpy_plans_list[key]) == 0: continue
+                ret_plans.append(cpy_plans_list[key].pop())
+        return ret_plans
+
     def logs(self):
         return self.bspace.log_msg
