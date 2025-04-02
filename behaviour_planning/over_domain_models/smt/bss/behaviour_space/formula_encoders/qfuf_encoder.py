@@ -18,12 +18,7 @@ def get_actions_vars(self, step):
     # It should return all possible actions at step t. For now it is used by the makespan optimal dimension.
     # We can add an expression that checks if this action is not a no-op action. and return this expression.
     nop_action = list(filter(lambda a: a.name == 'nop', self.task.actions))[0]
-    return [self.z3_action_variable(self.z3_timestep_var) != self.z3_actions_mapping[nop_action]]
-    # t = 
-    self.z3_action_variable(self.z3_timestep_var)
-
-    return list(map(lambda x: x[step], self.up_actions_to_z3.values()))
-
+    return [self.z3_action_variable(step) != self.z3_actions_mapping[nop_action]]
 
 def encode_n(self, **kwargs):
     """!

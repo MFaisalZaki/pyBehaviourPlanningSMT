@@ -29,7 +29,8 @@ class BehaviourCountSMT:
         # recompile the plans to the grounded problem.
         # recheck this if the results of fi planner are not as expected.
         # TODO: We need to find a better way to get the plans.
-        updated_planlist = list(map(lambda p: PDDLReader().parse_plan_string(self.task,  PDDLWriter(self.task).get_plan(PDDLReader().parse_plan_string(planningtask, p)).replace(' ', '_')), planlist))
+        # updated_planlist = list(map(lambda p: PDDLReader().parse_plan_string(self.task,  PDDLWriter(self.task).get_plan(PDDLReader().parse_plan_string(planningtask, p)).replace(' ', '_')), planlist))
+        updated_planlist = list(map(lambda p: PDDLReader().parse_plan_string(self.task, p), planlist))
         
         # compute the maximum plan length
         bspace_cfg['upper-bound'] = max(map(lambda p: len(p.actions), updated_planlist))
