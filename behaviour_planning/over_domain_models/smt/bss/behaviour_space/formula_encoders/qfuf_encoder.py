@@ -13,6 +13,18 @@ from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encod
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.common import extend
 from behaviour_planning.over_domain_models.smt.bss.behaviour_space.formula_encoders.utilities import flattern_expression
 
+def get_actions_vars(self, step):
+    # This function is used now by the makespan optimla dimension to compute the cost.
+    # It should return all possible actions at step t. For now it is used by the makespan optimal dimension.
+    # We can add an expression that checks if this action is not a no-op action. and return this expression.
+    nop_action = list(filter(lambda a: a.name == 'nop', self.task.actions))[0]
+    return [self.z3_action_variable(self.z3_timestep_var) != self.z3_actions_mapping[nop_action]]
+    # t = 
+    self.z3_action_variable(self.z3_timestep_var)
+
+    return list(map(lambda x: x[step], self.up_actions_to_z3.values()))
+
+
 def encode_n(self, **kwargs):
     """!
     This method encodes a formula into a list of assertions.
@@ -67,16 +79,16 @@ def encode_n(self, **kwargs):
         for k, v in formula.items():
             if v is not None: self.assertions.append(v)
     
-    # append up_fluent_to_z3 to the encoder.
-    self.up_fluent_to_z3 = defaultdict(list)
-    grounded_up_fluents = [f for f, _ in self.ground_problem.initial_values.items()]
-    for grounded_fluent in grounded_up_fluents:
-        fluent_name = str(grounded_fluent).replace('(', '_').replace(', ', '_').replace(')', '')
-        z3_fluent   = self.z3_fluents[grounded_fluent.fluent().name]
-        # convert the UP parameters of the grounded fluent to a list of Z3 objects
-        fluent_vars = list(map(lambda x: self.up_objects_to_z3[x.constant_value()], grounded_fluent.args))
-        for t in range(0, formula_length):
-            self.up_fluent_to_z3[fluent_name].append(z3_fluent(fluent_vars + [z3.IntVal(t, ctx=self.ctx)]))
+    # # append up_fluent_to_z3 to the encoder.
+    # self.up_fluent_to_z3 = defaultdict(list)
+    # grounded_up_fluents = [f for f, _ in self.ground_problem.initial_values.items()]
+    # for grounded_fluent in grounded_up_fluents:
+    #     fluent_name = str(grounded_fluent).replace('(', '_').replace(', ', '_').replace(')', '')
+    #     z3_fluent   = self.z3_fluents[grounded_fluent.fluent().name]
+    #     # convert the UP parameters of the grounded fluent to a list of Z3 objects
+    #     fluent_vars = list(map(lambda x: self.up_objects_to_z3[x.constant_value()], grounded_fluent.args))
+    #     for t in range(0, formula_length):
+    #         self.up_fluent_to_z3[fluent_name].append(z3_fluent(fluent_vars + [z3.IntVal(t, ctx=self.ctx)]))
 
     # define the horizon variable.
     self.horizon_var = z3.Int('horizon', ctx=self.ctx)
@@ -216,3 +228,4 @@ setattr(EncoderSequentialQFUF, 'extract_plan', extract_plan)
 setattr(EncoderSequentialQFUF, 'horizon_var', None)
 setattr(EncoderSequentialQFUF, 'actions_that_uses_resource', actions_that_uses_resource)
 setattr(EncoderSequentialQFUF, 'task_is_oversubscription_planning', False)
+setattr(EncoderSequentialQFUF, 'get_actions_vars', get_actions_vars)
