@@ -181,5 +181,3 @@ setattr(EncoderForall, 'get_all_action_vars', get_all_action_vars)
 setattr(EncoderForall, 'horizon_var', None)
 setattr(EncoderForall, 'actions_that_uses_resource', actions_that_uses_resource)
 setattr(EncoderForall, 'task_is_oversubscription_planning', False)
-
-
