@@ -24,7 +24,7 @@ class ForbidMode(Enum):
 
 class ForbidBehaviourIterativeSMT:
     def __init__(self, task, bspace_cfg, planner_cfg):
-        
+        self.basic_task               = task
         self.base_planner             = planner_cfg
         self.solver_timeout           = bspace_cfg.get('solver-timeout-ms', 300000)
         self.solver_memorylimit       = bspace_cfg.get('solver-memorylimit-mb', 16000)
