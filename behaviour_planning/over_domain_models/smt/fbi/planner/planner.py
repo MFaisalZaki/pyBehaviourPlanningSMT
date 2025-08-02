@@ -92,7 +92,7 @@ class ForbidBehaviourIterativeSMT:
             plan = self.bspace.extract_plan()
             if plan is None: break
             # Update the diverse plan list and check that we don't have repeated plans.
-            self.update(plan)
+            if not self.update(plan): break
             # Append the behaviour to the list of behaviours.
             if forbid_mode == ForbidMode.BEHAVIOUR and plan.behaviour is not None: behaviours_list.append(plan.behaviour)
             # Update the our assumptions.
@@ -108,9 +108,10 @@ class ForbidBehaviourIterativeSMT:
         # Make sure that we did not get a repeated plan.
         if plan in self.diverse_plans_actions_sequence:
             self.log_msg.append('Repeated plan generated.')
-            return
+            return False
         self.diverse_plans_actions_sequence.add(plan)
         self.diverse_plans.append(plan)
+        return True
 
     def logs(self):
         ret_logs = {}
