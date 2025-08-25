@@ -36,7 +36,7 @@ class LandmarkPredicatesOrderingSMT(DimensionConstructorSMT):
                 self.encodings.append((landmark_i >= landmark_j) == (uf_gt(landmark_i, landmark_j) == z3.BoolVal(True,  ctx=encoder.ctx)))
                 self.encodings.append((landmark_i < landmark_j)  == (uf_gt(landmark_i, landmark_j) == z3.BoolVal(False, ctx=encoder.ctx)))
                 # now create a variable to hold this ordering.
-                ordering_var = z3.Int(f'{self.name}-predicate-ordering-{str(landmark_i)}>{str(landmark_j)}', ctx=encoder.ctx)
+                ordering_var = z3.Int(f'{self.name}-predicate-ordering-{str(landmark_i)}__after__{str(landmark_j)}'.replace('(','_').replace(')',''), ctx=encoder.ctx)
                 self.encodings.append(ordering_var == uf_gt(landmark_i, landmark_j))
                 self.landmark_predciates_vars.append(ordering_var)
 
