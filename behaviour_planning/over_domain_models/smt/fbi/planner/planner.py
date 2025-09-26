@@ -84,8 +84,8 @@ class ForbidBehaviourIterativeSMT:
         assumptions = []
         if len(behaviours_list) > 0:
             assumptions.append(z3.Not(z3.Or(behaviours_list), ctx=self.ctx) if forbid_mode == ForbidMode.BEHAVIOUR else z3.Or(behaviours_list))
-        
-        if len(plans_list): assumptions.extend(plans_list)
+        if len(plans_list) > 0:
+            assumptions.extend(plans_list)
 
         while self.bspace.is_satisfiable(assumptions, self.solver_timeout, self.solver_memorylimit) and (len(self.diverse_plans) < required_plancount):
             # Extract plan from the behaviour space.
@@ -99,8 +99,8 @@ class ForbidBehaviourIterativeSMT:
             assumptions = []
             if len(behaviours_list) > 0:
                 assumptions.append(z3.Not(z3.Or(behaviours_list), ctx=self.ctx) if forbid_mode == ForbidMode.BEHAVIOUR else z3.Or(behaviours_list))
-            if len(plans_list): 
-                plans_list.append(z3.Not(z3.And(plan._z3_plan), ctx=self.ctx))
+            
+            plans_list.append(z3.Not(z3.And(plan._z3_plan), ctx=self.ctx))
             assumptions.extend(plans_list)
             print("Found {} till now: {}".format('behaviour(s)' if forbid_mode == ForbidMode.BEHAVIOUR else 'plan(s)', len(self.diverse_plans)))
     
