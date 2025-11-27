@@ -10,6 +10,20 @@
             "request": "launch",
             "program": "${workspaceFolder}/paper_examples/numeric_planning.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "run-benchmark.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/paper_experiments/run-benchmark.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--taskfile",
+                "${workspaceFolder}/sandbox-benchmark/tasksdir/2006-rovers-3-5.json",
+                "--outputdir",
+                "${workspaceFolder}/sandbox-benchmark/resultsdir",
+            ],
+            "justMyCode": false
         }
     ]
 }
