@@ -1093,7 +1093,7 @@ timelimit_map = {
     'fbi-smt' : '00:30:00',
     'fbi-smt-naive' : '00:30:00',
     'fi-bc': '00:45:00',
-    'symkr': '00:45:00',
+    'symk': '00:45:00',
 }   
 
 def wrap_cmd(taskname, cmd, timelimt, memorylimit, slurmdumpdir):
