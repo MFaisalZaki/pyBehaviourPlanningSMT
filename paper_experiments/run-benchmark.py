@@ -99,7 +99,7 @@ def run_fbi(taskdetails, dims, compilation_list):
             "encoder": "seq",
             "solver-timeout-ms": 600000,
             "solver-memorylimit-mb": 16000,
-            "dims": dims,
+            "dims": [] if 'naive' in taskdetails['planner'] else dims,
             "compliation-list": compilation_list,
             "run-plan-validation": False,
             "disable-after-goal-state-actions": False
@@ -110,7 +110,14 @@ def run_fbi(taskdetails, dims, compilation_list):
     _goals  = add_utility_values(task) if taskdetails['planning-type'] == 'oversubscription' else {}
     planner = ForbidBehaviourIterativeSMT(task, _params['bspace-cfg'], _params['base-planner-cfg'])
     plans   = planner.plan(k)
-    results = construct_results_file(taskdetails, task, plans, planner.bspace)
+    bspace  = planner.bspace
+    if 'naive' in taskdetails['planner']:
+        task_writer = PDDLWriter(task)
+        _plans_str = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' for p in plans]
+        bspace, select_plans = select_plans_using_bspace(taskdetails, dims, _plans_str, compilation_list, taskdetails['planning-type'] == 'oversubscription')
+        plans = list(chain.from_iterable(bspace.selected_plans_list.values()))
+
+    results = construct_results_file(taskdetails, task, plans, bspace)
     return results | {'logs': planner.log_msg} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
 def run_fi(taskdetails, dims, compilation_list):
@@ -230,9 +237,7 @@ def solve(taskname, args):
     ret_details = {}
     start_time = time.time()
     match taskdetails['planner']:
-        case 'fbi-smt-naive':
-            ret_details = run_fbi(taskdetails,    [], compilation_list)
-        case 'fbi-smt':
+        case 'fbi-smt-naive' | 'fbi-smt':
             ret_details = run_fbi(taskdetails,  dims, compilation_list)
         case 'fi-bc':
             ret_details = run_fi(taskdetails,   dims, compilation_list)
