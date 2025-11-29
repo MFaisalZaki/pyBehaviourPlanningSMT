@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+import time
 
 import unified_planning as up
 import subprocess
@@ -225,6 +226,7 @@ def solve(taskname, args):
         dims += [[ResourceCountSMT, taskdetails['resources']]] if taskdetails['resources'] is not None and os.path.exists(taskdetails['resources']) else []
 
     ret_details = {}
+    start_time = time.time()
     match taskdetails['planner']:
         case 'fbi-smt-naive':
             ret_details = run_fbi(taskdetails,    [], compilation_list)
@@ -236,6 +238,8 @@ def solve(taskname, args):
             ret_details = run_symk(taskdetails, dims, compilation_list)
         case _:
             assert False, f"Unknown planning type {taskdetails['planning-type']}"
+    end_time = time.time()
+    ret_details['total-time-seconds'] = end_time - start_time
 
     outputpath = os.path.join(args.outputdir, f'{taskname}-results.json')
     if len(ret_details) == 0: return
@@ -250,7 +254,7 @@ def main():
     os.makedirs(errorsdir, exist_ok=True)
     
     # # for dev only
-    solve(taskname, args)
+    # solve(taskname, args)
 
     try:
         solve(taskname, args)
