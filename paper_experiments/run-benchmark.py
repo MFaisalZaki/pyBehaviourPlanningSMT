@@ -7,15 +7,18 @@ import time
 import unified_planning as up
 import subprocess
 import tempfile
+
+import renamer
+
 from itertools import chain
 from subprocess import SubprocessError
 from copy import deepcopy
 from unified_planning.io import PDDLReader, PDDLWriter
-from unified_planning.shortcuts import CompilationKind
+from unified_planning.shortcuts import CompilationKind, Compiler
 from unified_planning.shortcuts import OneshotPlanner, AnytimePlanner, OperatorKind
 from unified_planning.engines import PlanGenerationResultStatus as ResultsStatus
 
-from behaviour_planning.over_domain_models.smt.shortcuts import GoalPredicatesOrderingSMT, MakespanOptimalCostSMT, ResourceCountSMT, UtilityValueSMT
+from behaviour_planning.over_domain_models.smt.shortcuts import GoalPredicatesOrderingSMT, MakespanOptimalCostSMT, ResourceCountSMT, UtilityValueSMT, FunctionsSMT
 from behaviour_planning.over_domain_models.smt.shortcuts import ForbidBehaviourIterativeSMT
 
 from behaviour_planning.over_domain_models.smt.fbi.planner.planner import ForbidBehaviourIterativeSMT
@@ -42,8 +45,8 @@ def construct_results_file(taskdetails, task, plans, bspace):
             'behaviour-count': len(set(p.behaviour for p in plans))
         },
         'info' : {
-            'domain' : os.path.basename(os.path.dirname(taskdetails['domainfile'])) + '/' + os.path.basename(taskdetails['domainfile']),
-            'problem': os.path.basename(taskdetails['problemfile']),
+            'domain' : os.path.basename(os.path.dirname(taskdetails['domainfile-name'])) + '/' + os.path.basename(taskdetails['domainfile-name']),
+            'problem': os.path.basename(taskdetails['problemfile-name']),
             'planner': taskdetails['planner'],
             'tag' : taskdetails['planner'],
             'planning-type': taskdetails['planning-type'],
@@ -112,7 +115,8 @@ def run_fbi(taskdetails, dims, compilation_list):
     plans   = planner.plan(k)
     bspace  = planner.bspace
     if 'naive' in taskdetails['planner']:
-        task_writer = PDDLWriter(task)
+        task_writer = PDDLWriter(planner.compiled_task.problem)
+        task_writer = PDDLWriter(planner.basic_task)
         _plans_str = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' for p in plans]
         bspace, select_plans = select_plans_using_bspace(taskdetails, dims, _plans_str, compilation_list, taskdetails['planning-type'] == 'oversubscription')
         plans = list(chain.from_iterable(bspace.selected_plans_list.values()))
@@ -168,7 +172,7 @@ def run_fi(taskdetails, dims, compilation_list):
     results = construct_results_file(taskdetails, task, selected_plans, bspace)
     task_writer = PDDLWriter(task)
     all_plans = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in chain.from_iterable(bspace.selected_plans_list.values())]
-    return results | {'logs': logs + bspace.bspace.log_msg, 'all-plans': all_plans}
+    return results | {'logs': logs + bspace.bspace.log_msg, 'all-plans': all_plans, 'diff-count': len(all_plans) - len(selected_plans)}
 
 def run_symk(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
@@ -216,8 +220,36 @@ def solve(taskname, args):
     with open(args.taskfile, 'r') as f:
         taskdetails = json.load(f)
     
+    # TODO: Run a task renamer compilation to avoid the issue triggered by the mismatch between action names due 
+    # the difference in - and _.
+    tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
+    os.makedirs(tmpdir, exist_ok=True)
+    # read the task, then rename it and then write it back.
+    # 
+    # renamed_task   = renamer.Renamer().compile(_original_task).problem
+    
     compilation_list  = [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING]]
     compilation_list += [["up_disjunctive_conditions_remover", CompilationKind.DISJUNCTIVE_CONDITIONS_REMOVING]]
+    # Apply these compilations and write the problem to a file to deal with with -,_ mistmatch.
+
+    _original_task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+    names = [name for name, _ in compilation_list]
+    compilationkinds = [kind for _, kind in compilation_list]
+    with Compiler(names=names, compilation_kinds=compilationkinds) as compiler:
+        compiled_task = compiler.compile(_original_task)
+
+    _task_writer   = PDDLWriter(compiled_task.problem)
+    renamed_domainfile  = os.path.join(tmpdir, 'renamed-domain.pddl')
+    renamed_problemfile = os.path.join(tmpdir, 'renamed-problem.pddl')
+    _task_writer.write_domain(renamed_domainfile)
+    _task_writer.write_problem(renamed_problemfile)
+
+    taskdetails['domainfile-name']  = taskdetails['domainfile']
+    taskdetails['problemfile-name'] = taskdetails['problemfile']
+
+    taskdetails['domainfile']  = renamed_domainfile
+    taskdetails['problemfile'] = renamed_problemfile
+
     compilation_list += [["up_grounder", CompilationKind.GROUNDING]] if 'numerical' in taskdetails['planning-type'] else [["fast-downward-reachability-grounder", CompilationKind.GROUNDING]]
 
     dims = []
@@ -232,7 +264,11 @@ def solve(taskname, args):
             [GoalPredicatesOrderingSMT, {}],
             [MakespanOptimalCostSMT, {"cost-bound-factor": taskdetails['q']}]
         ]
-        dims += [[ResourceCountSMT, taskdetails['resources']]] if taskdetails['resources'] is not None and os.path.exists(taskdetails['resources']) else []
+        if taskdetails['resources'] is not None and os.path.exists(taskdetails['resources']):
+            if taskdetails['planning-type'] == 'numerical':
+                dims += [[FunctionsSMT, taskdetails['resources']]]
+            else:
+                dims += [[ResourceCountSMT, taskdetails['resources']]]
 
     ret_details = {}
     start_time = time.time()
