@@ -1088,6 +1088,14 @@ classical_instances = [
 ]
 
 
+
+timelimit_map = {
+    'fbi-smt' : '00:30:00',
+    'fbi-smt-naive' : '00:30:00',
+    'fi-bc': '00:45:00',
+    'symkr': '00:45:00',
+}   
+
 def wrap_cmd(taskname, cmd, timelimt, memorylimit, slurmdumpdir):
     return f"""#!/bin/bash
 #SBATCH --job-name={taskname}
@@ -1217,10 +1225,7 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memor
         cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
         cmd.append(f"deactivate")
         cmd = " && ".join(cmd)
-        # if the planner is fi or symk give them 15 mins to compute the behaviour count.
-        if task['planner'] in ['fi-bc', 'symk']: timelimit = '00:45:00'
-
-        slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit, memorylimit, slurmdumpdir)
+        slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit_map[task['planner']], memorylimit, slurmdumpdir)
         slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
     return slurm_scripts
 
@@ -1269,7 +1274,7 @@ def main():
 
     slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir)
 
-    for idx, (taskname, script) in enumerate(slurm_scripts):
+    for idx, (taskname, script) in enumerate(slurm_scripts[::-1]):
         with open(os.path.join(slurmdumpdir, f"{idx}_{taskname}.sh"), 'w') as f:
             f.write(script)
 

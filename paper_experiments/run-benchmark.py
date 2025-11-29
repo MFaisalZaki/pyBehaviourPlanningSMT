@@ -185,7 +185,9 @@ def run_symk(taskdetails, dims, compilation_list):
         _osp_task.goals.clear()
     # now remove the hard goals then generate k plans with different utilities.
     with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:        
-        with AnytimePlanner(name='symk', params={"plan_cost_bound": cost_bound, "number_of_plans": k}) as planner:
+        with AnytimePlanner(name='symk', params={"symk_search_time_limit": "1800",
+                                                 "plan_cost_bound": 
+                                                 cost_bound, "number_of_plans": k}) as planner:
             for i, result in enumerate(planner.get_solutions(_osp_task)):
                 if result.status == ResultsStatus.INTERMEDIATE:
                     planlist.append(result.plan) if i < k else None
