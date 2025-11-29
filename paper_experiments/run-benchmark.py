@@ -250,6 +250,9 @@ def solve(taskname, args):
     taskdetails['domainfile']  = renamed_domainfile
     taskdetails['problemfile'] = renamed_problemfile
 
+
+
+
     compilation_list += [["up_grounder", CompilationKind.GROUNDING]] if 'numerical' in taskdetails['planning-type'] else [["fast-downward-reachability-grounder", CompilationKind.GROUNDING]]
 
     dims = []
@@ -265,6 +268,14 @@ def solve(taskname, args):
             [MakespanOptimalCostSMT, {"cost-bound-factor": taskdetails['q']}]
         ]
         if taskdetails['resources'] is not None and os.path.exists(taskdetails['resources']):
+            # I hate this but we have no saying in this.
+            # make sure to rename the resouces details.
+            with open(taskdetails['resources'], 'r') as f:
+                resource_content = f.read()
+            resource_content = resource_content.replace('-', '_')
+            with open(taskdetails['resources'], 'w') as f:
+                f.write(resource_content)
+
             if taskdetails['planning-type'] == 'numerical':
                 dims += [[FunctionsSMT, taskdetails['resources']]]
             else:
