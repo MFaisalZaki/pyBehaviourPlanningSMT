@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "expedition",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "2": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "3": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "4": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "5": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "6": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "7": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "8": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "9": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "10": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "11": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "12": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "13": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "14": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "15": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "16": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "17": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "18": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "19": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)",
+        "20": "(:function sled_supplies_s0 0 100 2)\n(:function sled_supplies_s1 0 100 2)"
+    }
+}

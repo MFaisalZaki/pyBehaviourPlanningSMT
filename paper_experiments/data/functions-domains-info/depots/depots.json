@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "depots",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function fuel-cost 0 100 2)",
+        "2": "(:function fuel-cost 0 100 2)",
+        "3": "(:function fuel-cost 0 100 2)",
+        "4": "(:function fuel-cost 0 100 2)",
+        "5": "(:function fuel-cost 0 100 2)",
+        "6": "(:function fuel-cost 0 100 2)",
+        "7": "(:function fuel-cost 0 100 2)",
+        "8": "(:function fuel-cost 0 100 2)",
+        "9": "(:function fuel-cost 0 100 2)",
+        "10": "(:function fuel-cost 0 100 2)",
+        "11": "(:function fuel-cost 0 100 2)",
+        "12": "(:function fuel-cost 0 100 2)",
+        "13": "(:function fuel-cost 0 100 2)",
+        "14": "(:function fuel-cost 0 100 2)",
+        "15": "(:function fuel-cost 0 100 2)",
+        "16": "(:function fuel-cost 0 100 2)",
+        "17": "(:function fuel-cost 0 100 2)",
+        "18": "(:function fuel-cost 0 100 2)",
+        "19": "(:function fuel-cost 0 100 2)",
+        "20": "(:function fuel-cost 0 100 2)"
+    }
+}

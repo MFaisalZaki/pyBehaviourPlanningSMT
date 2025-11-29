@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "childsnack",
+        "year" : "2014"
+    },
+    "instances": {
+        "1": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "2": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "3": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "4": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "5": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "6": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)",
+        "7": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "8": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "9": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "10": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "11": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "12": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "13": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "14": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "15": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "16": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "17": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "18": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "19": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)",
+        "20": "(:resource tray1 100 0 5)\n(:resource tray2 100 0 5)\n(:resource tray3 100 0 5)"
+    }
+}

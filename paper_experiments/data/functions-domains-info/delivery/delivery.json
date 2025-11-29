@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "delivery",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function cost 0 100 2)",
+        "2": "(:function cost 0 100 2)",
+        "3": "(:function cost 0 100 2)",
+        "4": "(:function cost 0 100 2)",
+        "5": "(:function cost 0 100 2)",
+        "6": "(:function cost 0 100 2)",
+        "7": "(:function cost 0 100 2)",
+        "8": "(:function cost 0 100 2)",
+        "9": "(:function cost 0 100 2)",
+        "10": "(:function cost 0 100 2)",
+        "11": "(:function cost 0 100 2)",
+        "12": "(:function cost 0 100 2)",
+        "13": "(:function cost 0 100 2)",
+        "14": "(:function cost 0 100 2)",
+        "15": "(:function cost 0 100 2)",
+        "16": "(:function cost 0 100 2)",
+        "17": "(:function cost 0 100 2)",
+        "18": "(:function cost 0 100 2)",
+        "19": "(:function cost 0 100 2)",
+        "20": "(:function cost 0 100 2)"
+    }
+}

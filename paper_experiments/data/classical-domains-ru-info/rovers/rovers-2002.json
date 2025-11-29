@@ -1,0 +1,29 @@
+{
+    "info": {
+        "domain" : "rovers",
+        "year" : "2002"
+    },
+    "instances": {
+        "1": "(:resource rover0 100 0 5)",
+        "2": "(:resource rover0 100 0 5)",
+        "3": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)",
+        "4": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)",
+        "5": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)",
+        "6": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)",
+        "7": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)",
+        "8": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "9": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "10": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "11": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "12": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "13": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "14": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "15": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "16": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)",
+        "17": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)\n(:resource rover4 100 0 5)\n(:resource rover5 100 0 5)",
+        "18": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)\n(:resource rover4 100 0 5)\n(:resource rover5 100 0 5)",
+        "19": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)\n(:resource rover4 100 0 5)\n(:resource rover5 100 0 5)",
+        "20": "(:resource rover0 100 0 5)\n(:resource rover1 100 0 5)\n(:resource rover2 100 0 5)\n(:resource rover3 100 0 5)\n(:resource rover4 100 0 5)\n(:resource rover5 100 0 5)\n(:resource rover6 100 0 5)\n(:resource rover7 100 0 5)"
+    }
+    
+}

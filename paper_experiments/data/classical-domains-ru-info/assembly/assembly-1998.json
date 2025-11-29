@@ -1,0 +1,38 @@
+{
+    "info": {
+        "domain" : "assembly",
+        "year" : "1998"
+    },
+    "instances": {
+        "1": "(:resource charger 100 0 5)\n(:resource voltmeter 100 0 5)",
+        "2": "(:resource hammock 100 0 5)",
+        "3": "(:resource clamp 100 0 5)\n(:resource hammer 100 0 5)\n(:resource file 100 0 5)",
+        "4": "(:resource voltmeter 100 0 5)\n(:resource hammock 100 0 5)\n(:resource charger 100 0 5)",
+        "5": "(:resource hammock 100 0 5)\n(:resource pliers 100 0 5)\n(:resource scalpel 100 0 5)",
+        "6": "(:resource tweezers 100 0 5)",
+        "7": "(:resource scope 100 0 5)\n(:resource pliers 100 0 5)\n(:resource voltmeter 100 0 5)",
+        "8": "(:resource voltmeter 100 0 5)",
+        "9": "(:resource file 100 0 5)",
+        "10": "(:resource pliers 100 0 5)",
+        "11": "(:resource scope 100 0 5)\n(:resource scaffold 100 0 5)",
+        "12": "(:resource hammer 100 0 5)\n(:resource hammock 100 0 5)",
+        "13": "(:resource voltmeter 100 0 5)",
+        "14": "(:resource scalpel 100 0 5)",
+        "15": "(:resource tweezers 100 0 5)\n(:resource hammer 100 0 5)",
+        "16": "(:resource hammer 100 0 5)\n(:resource tweezers 100 0 5)\n(:resource scalpel 100 0 5)",
+        "17": "(:resource charger 100 0 5)\n(:resource hammer 100 0 5)",
+        "18": "(:resource scalpel 100 0 5)\n(:resource clamp 100 0 5)\n(:resource hammock 100 0 5)",
+        "19": "(:resource voltmeter 100 0 5)\n(:resource hammock 100 0 5)",
+        "20": "(:resource scope 100 0 5)\n(:resource scaffold 100 0 5)\n(:resource pliers 100 0 5)",
+        "21": "(:resource scalpel 100 0 5)\n(:resource file 100 0 5)",
+        "22": "(:resource hammer 100 0 5)",
+        "23": "(:resource clamp 100 0 5)\n(:resource scope 100 0 5)",
+        "24": "(:resource hammer 100 0 5)\n(:resource scope 100 0 5)",
+        "25": "(:resource hammer 100 0 5)\n(:resource scalpel 100 0 5)",
+        "26": "(:resource scalpel 100 0 5)",
+        "27": "(:resource hammock 100 0 5)\n(:resource scalpel 100 0 5)\n(:resource voltmeter 100 0 5)",
+        "28": "(:resource scaffold 100 0 5)",
+        "29": "(:resource pliers 100 0 5)",
+        "30": "(:resource file 100 0 5)"
+    }
+}

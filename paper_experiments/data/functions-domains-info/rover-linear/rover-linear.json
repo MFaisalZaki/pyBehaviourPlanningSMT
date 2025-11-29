@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "rover",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function energy_rover0 0 100 5)",
+        "2": "(:function energy_rover0 0 100 5)",
+        "3": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)",
+        "4": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)",
+        "5": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)",
+        "6": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)",
+        "7": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)",
+        "8": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "9": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "10": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "11": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "12": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "13": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "14": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "15": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "16": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)",
+        "17": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)\n(:function energy_rover4 0 100 5)\n(:function energy_rover5 0 100 5)",
+        "18": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)\n(:function energy_rover4 0 100 5)\n(:function energy_rover5 0 100 5)",
+        "19": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)\n(:function energy_rover4 0 100 5)\n(:function energy_rover5 0 100 5)",
+        "20": "(:function energy_rover0 0 100 5)\n(:function energy_rover1 0 100 5)\n(:function energy_rover2 0 100 5)\n(:function energy_rover3 0 100 5)\n(:function energy_rover4 0 100 5)\n(:function energy_rover5 0 100 5)\n(:function energy_rover6 0 100 5)\n(:function energy_rover7 0 100 5)"
+    }
+}

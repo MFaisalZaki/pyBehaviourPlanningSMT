@@ -1,0 +1,31 @@
+{
+    "info": {
+        "domain" : "zenotravel",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function capacity_plane1 0 100 2)",
+        "2": "(:function capacity_plane1 0 100 2)",
+        "3": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)",
+        "4": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)",
+        "5": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)",
+        "6": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)",
+        "7": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)",
+        "8": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "9": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "10": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "11": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "12": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "13": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)",
+        "14": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "15": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "16": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "17": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "18": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "19": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "20": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "21": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "22": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)",
+        "23": "(:function capacity_plane1 0 100 2)\n(:function capacity_plane2 0 100 2)\n(:function capacity_plane3 0 100 2)\n(:function capacity_plane4 0 100 2)\n(:function capacity_plane5 0 100 2)"
+    }
+}

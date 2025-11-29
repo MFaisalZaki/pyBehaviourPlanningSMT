@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "satellite",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function fuel_satellite0 0 100 2)",
+        "2": "(:function fuel_satellite0 0 100 2)",
+        "3": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)",
+        "4": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)",
+        "5": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)",
+        "6": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)",
+        "7": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)",
+        "8": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)",
+        "9": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "10": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "11": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "12": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "13": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "14": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)\n(:function fuel_satellite5 0 100 2)",
+        "15": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)\n(:function fuel_satellite5 0 100 2)\n(:function fuel_satellite6 0 100 2)\n(:function fuel_satellite7 0 100 2)",
+        "16": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)\n(:function fuel_satellite5 0 100 2)\n(:function fuel_satellite6 0 100 2)\n(:function fuel_satellite7 0 100 2)\n(:function fuel_satellite8 0 100 2)\n(:function fuel_satellite9 0 100 2)",
+        "17": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)\n(:function fuel_satellite5 0 100 2)\n(:function fuel_satellite6 0 100 2)\n(:function fuel_satellite7 0 100 2)\n(:function fuel_satellite8 0 100 2)\n(:function fuel_satellite9 0 100 2)\n(:function fuel_satellite10 0 100 2)\n(:function fuel_satellite11 0 100 2)",
+        "18": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "19": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)",
+        "20": "(:function fuel_satellite0 0 100 2)\n(:function fuel_satellite1 0 100 2)\n(:function fuel_satellite2 0 100 2)\n(:function fuel_satellite3 0 100 2)\n(:function fuel_satellite4 0 100 2)"
+    }
+}

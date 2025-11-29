@@ -1,8 +1,9 @@
 import sys
 import unified_planning as up
+import z3
 
 from collections import defaultdict
-
+from copy import deepcopy
 from unified_planning.io import PDDLReader, PDDLWriter
 from unified_planning.shortcuts import Compiler, CompilationKind, OperatorKind
 from unified_planning.plans import ActionInstance
@@ -49,9 +50,13 @@ class BehaviourCountSMT:
         for i, plan in enumerate(updated_planlist):
             ret = self.bspace.plan_behaviour(plan, i=i, return_plan=False)
             if ret is None: self.bspace.log_msg.append(f'Plan {i} is not satisfiable.')
+            setattr(plan, 'behaviour', ' ^ '.join(list(map(lambda s : f'({str(s)})', self._flatten_expr(ret)))))
             self.selected_plans_list[ret].append(plan)
             self.colleted_behaviours.add(ret)
             if self.count() >= select_k: break
+
+    def _flatten_expr(self, expr): 
+        return [expr] if not (z3.is_and(expr) or z3.is_or(expr)) else [arg for child in expr.children() for arg in self._flatten_expr(child)]
 
     def _prepare_task(self, planningtask, is_oversubscription_planning):
         # initialize the fluents.        
@@ -97,8 +102,8 @@ class BehaviourCountSMT:
     
     def selected_plans(self, k):
         ret_plans = []
-        cpy_plans_list = self.selected_plans_list.copy()
-        while len(ret_plans) < k:
+        cpy_plans_list = deepcopy(self.selected_plans_list)
+        while len(ret_plans) < k and not all([len(v) == 0 for v in cpy_plans_list.values()]):
             for key in cpy_plans_list.keys():
                 if len(ret_plans) >= k: break
                 if len(cpy_plans_list[key]) == 0: continue

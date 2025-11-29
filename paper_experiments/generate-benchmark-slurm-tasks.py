@@ -1192,6 +1192,7 @@ def arg_parser():
     parser.add_argument('--sandbox-dir', type=str, required=True, help='Path to the sandbox directory.')
     parser.add_argument('--planning-tasks-dir', type=str, required=True, help='Directory containing planning tasks.')
     parser.add_argument('--resources-dir', type=str, required=False, default='', help='Directory containing resource files for tasks.')
+    parser.add_argument('--planning-type', type=str, required=False, default='classical', help='Type of planning tasks to consider (classical/oversubscription/numerical).')
     return parser
 
 def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memorylimit='16G'):
@@ -1211,23 +1212,46 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memor
         rundir = os.path.join(os.path.dirname(slurmdumpdir), 'rundir', task['filename'].replace('.json',''))
         os.makedirs(rundir, exist_ok=True)
 
-
         cmd = [f"source {venv}/bin/activate"]
         cmd.append(f"cd {rundir}")
         cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
         cmd.append(f"deactivate")
         cmd = " && ".join(cmd)
+        # if the planner is fi or symk give them 15 mins to compute the behaviour count.
+        if task['planner'] in ['fi-bc', 'symk']: timelimit = '00:45:00'
+
         slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit, memorylimit, slurmdumpdir)
         slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
     return slurm_scripts
 
-def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir):
+def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type):
     _tasks = []
     ru_info_dumps = os.path.join(sandboxdir, 'resource-usage-dumps')
     os.makedirs(ru_info_dumps, exist_ok=True)
-    for k in [5,10,100,1000]:
-        for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, set(classical_instances)):
-            _tasks.append(task | {'planner' : 'fbi-asp', 'k-plans': k, 'filename': f"{task['ipc_year']}-{task['domainname']}-{task['instanceno']}-{k}.json"})
+
+    q_list   = []
+    planners = []
+    selected_instances = set()
+    match planning_type:
+        case 'classical':
+            q_list   = [1.0, 2.0]
+            planners = ['fbi-smt', 'fbi-smt-naive', 'fi-bc']
+            selected_instances = set(classical_instances)
+        case 'oversubscription':
+            q_list = [0.25, 0.5, 0.75, 1.0]
+            planners = ['fbi-smt', 'fbi-smt-naive', 'symk']
+            selected_instances = set(classical_instances)
+        case 'numerical':
+            q_list = [1.0, 2.0]
+            planners = ['fbi-smt', 'fbi-smt-naive']
+        case _:
+            q_list = []
+
+    for q in q_list:
+        for k in [5,10,100,1000]:
+            for planner in planners:
+                for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, selected_instances):
+                    _tasks.append(task | { 'sandbox-dir' : sandboxdir, 'planning-type': planning_type, 'planner' : planner, 'q': q, 'k-plans': k, 'filename': f"{q}-{k}-{planning_type}-{task['ipc_year']}-{task['domainname']}-{task['instanceno']}-{planner}.json"})
     return _tasks
 
 def main():
@@ -1237,10 +1261,13 @@ def main():
     sandbox_dir = args.sandbox_dir
     planning_tasks_dir = args.planning_tasks_dir
     resources_dir = args.resources_dir
-    slurmdumpdir = os.path.join(sandbox_dir, 'slurm-dumps')
+    planning_type = args.planning_type
+    slurmdumpdir  = os.path.join(sandbox_dir, 'slurm-dumps')
     os.makedirs(slurmdumpdir, exist_ok=True)
 
-    slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir), slurmdumpdir)
+    print(f"Generating SLURM scripts for planning tasks in {planning_tasks_dir} with resources from {resources_dir} and planning type {planning_type}...")
+
+    slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir)
 
     for idx, (taskname, script) in enumerate(slurm_scripts):
         with open(os.path.join(slurmdumpdir, f"{idx}_{taskname}.sh"), 'w') as f:

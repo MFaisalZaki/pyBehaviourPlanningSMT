@@ -12,6 +12,32 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "generate-benchmark-slurm-tasks",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/paper_experiments/generate-benchmark-slurm-tasks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--sandbox-dir",
+                // "${workspaceFolder}/sandbox-benchmark-classical/",
+                // "${workspaceFolder}/sandbox-benchmark-numerical/",
+                "${workspaceFolder}/sandbox-benchmark-oversubscription",
+                "--planning-tasks-dir",
+                "${workspaceFolder}/sandbox-benchmark/classical-domains",
+                // "${workspaceFolder}/sandbox-benchmark/numeric-domains",
+                "--resources-dir",
+                "${workspaceFolder}/paper_experiments/data/classical-domains-ru-info",
+                // "${workspaceFolder}/paper_experiments/data/functions-domains-info",
+                "--planning-type",
+                // "classical"
+                // "numerical"
+                "oversubscription"
+                
+
+            ],
+            "justMyCode": false
+        },
+        {
             "name": "run-benchmark.py",
             "type": "debugpy",
             "request": "launch",
@@ -19,9 +45,13 @@
             "console": "integratedTerminal",
             "args": [
                 "--taskfile",
-                "${workspaceFolder}/sandbox-benchmark/tasksdir/2006-rovers-3-5.json",
+                // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt-naive.json",
+                // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt.json",
+                // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-10-2006-rovers-1-fi-bc.json",
+                // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/1.0-5-numerical-None-rover-linear-1-fbi-smt.json",
+                "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/0.5-5-oversubscription-2006-rovers-1-symk.json",
                 "--outputdir",
-                "${workspaceFolder}/sandbox-benchmark/resultsdir",
+                "${workspaceFolder}/sandbox-benchmark-classical/resultsdir"
             ],
             "justMyCode": false
         }

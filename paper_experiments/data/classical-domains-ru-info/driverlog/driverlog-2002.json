@@ -1,0 +1,29 @@
+{
+    "info": {
+        "domain" : "driverlog",
+        "year" : "2002"
+    },
+    "instances": {
+        "1": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)",
+        "2": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)",
+        "3": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)",
+        "4": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)",
+        "5": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)",
+        "6": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "7": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "8": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "9": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "10": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "11": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "12": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "13": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "14": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)",
+        "15": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck4 100 0 5)",
+        "16": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck4 100 0 5)\n(:resource truck5 100 0 5)",
+        "17": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck4 100 0 5)\n(:resource truck5 100 0 5)",
+        "18": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck4 100 0 5)\n(:resource truck5 100 0 5)",
+        "19": "(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck4 100 0 5)\n(:resource truck5 100 0 5)",
+        "20": "(:resource truck0 100 0 5)\n(:resource truck1 100 0 5)\n(:resource truck2 100 0 5)\n(:resource truck3 100 0 5)\n(:resource truck5 100 0 5)\n(:resource truck6 100 0 5)"
+    }
+    
+}

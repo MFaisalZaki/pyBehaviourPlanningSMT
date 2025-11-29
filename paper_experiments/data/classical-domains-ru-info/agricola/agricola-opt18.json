@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "agricola",
+        "year" : "2018"
+    },
+    "instances": {
+        "1": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "2": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "3": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "4": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "5": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "6": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "7": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "8": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "9": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "10": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "11": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "12": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "13": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "14": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "15": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "16": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "17": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)",
+        "18": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)\n(:resource worker6 100 0 5)",
+        "19": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)",
+        "20": "(:resource worker1 100 0 5)\n(:resource worker2 100 0 5)\n(:resource worker3 100 0 5)\n(:resource worker4 100 0 5)\n(:resource worker5 100 0 5)"
+    }
+}

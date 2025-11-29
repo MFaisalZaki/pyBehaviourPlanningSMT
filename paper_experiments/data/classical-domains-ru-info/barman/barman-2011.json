@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "barman",
+        "year" : "2011"
+    },
+    "instances": {
+        "1": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "2": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "3": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "4": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "5": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "6": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "7": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "8": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "9": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "10": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "11": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "12": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "13": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "14": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "15": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "16": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "17": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "18": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "19": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)",
+        "20": "(:resource dispenser1 100 0 5)\n(:resource dispenser2 100 0 5)\n(:resource dispenser3 100 0 5)"
+    }
+}

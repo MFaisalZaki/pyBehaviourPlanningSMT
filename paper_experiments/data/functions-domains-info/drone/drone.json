@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "drone",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function battery-level 0 100 2)",
+        "2": "(:function battery-level 0 100 2)",
+        "3": "(:function battery-level 0 100 2)",
+        "4": "(:function battery-level 0 100 2)",
+        "5": "(:function battery-level 0 100 2)",
+        "6": "(:function battery-level 0 100 2)",
+        "7": "(:function battery-level 0 100 2)",
+        "8": "(:function battery-level 0 100 2)",
+        "9": "(:function battery-level 0 100 2)",
+        "10": "(:function battery-level 0 100 2)",
+        "11": "(:function battery-level 0 100 2)",
+        "12": "(:function battery-level 0 100 2)",
+        "13": "(:function battery-level 0 100 2)",
+        "14": "(:function battery-level 0 100 2)",
+        "15": "(:function battery-level 0 100 2)",
+        "16": "(:function battery-level 0 100 2)",
+        "17": "(:function battery-level 0 100 2)",
+        "18": "(:function battery-level 0 100 2)",
+        "19": "(:function battery-level 0 100 2)",
+        "20": "(:function battery-level 0 100 2)"
+    }
+}

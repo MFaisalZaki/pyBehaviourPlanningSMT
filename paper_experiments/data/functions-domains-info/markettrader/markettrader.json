@@ -1,0 +1,28 @@
+{
+    "info": {
+        "domain" : "markettrader",
+        "year" : "None"
+    },
+    "instances": {
+        "1": "(:function cash 0 100 2)",
+        "2": "(:function cash 0 100 2)",
+        "3": "(:function cash 0 100 2)",
+        "4": "(:function cash 0 100 2)",
+        "5": "(:function cash 0 100 2)",
+        "6": "(:function cash 0 100 2)",
+        "7": "(:function cash 0 100 2)",
+        "8": "(:function cash 0 100 2)",
+        "9": "(:function cash 0 100 2)",
+        "10": "(:function cash 0 100 2)",
+        "11": "(:function cash 0 100 2)",
+        "12": "(:function cash 0 100 2)",
+        "13": "(:function cash 0 100 2)",
+        "14": "(:function cash 0 100 2)",
+        "15": "(:function cash 0 100 2)",
+        "16": "(:function cash 0 100 2)",
+        "17": "(:function cash 0 100 2)",
+        "18": "(:function cash 0 100 2)",
+        "19": "(:function cash 0 100 2)",
+        "20": "(:function cash 0 100 2)"
+    }
+}

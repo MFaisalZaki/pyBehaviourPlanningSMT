@@ -1,0 +1,29 @@
+{
+    "info": {
+        "domain" : "floortile",
+        "year" : "2011"
+    },
+    "instances": {
+        "1": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "2": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "3": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "4": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "5": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "6": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "7": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "8": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "9": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "10": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "11": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "12": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)",
+        "13": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "14": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "15": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "16": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "17": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "18": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "19": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)",
+        "20": "(:resource robot1 100 0 5)\n(:resource robot2 100 0 5)\n(:resource robot3 100 0 5)"
+    }
+    
+}

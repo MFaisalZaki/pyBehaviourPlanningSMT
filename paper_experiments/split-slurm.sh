@@ -6,7 +6,7 @@ SOURCE_DIR="$1"
 DEST_PARENT_DIR="$2"
 NAME_PREFIX="$3"
 SLURM_PART="$4"
-MAX_FILES=500
+MAX_FILES=1000
 
 if [[ -z "$SOURCE_DIR" || -z "$DEST_PARENT_DIR" || -z "$NAME_PREFIX" ]]; then
     echo "Usage: $0 /path/to/source_dir /path/to/parent_dest_dir name_prefix"
