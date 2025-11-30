@@ -113,6 +113,8 @@ def run_fbi(taskdetails, dims, compilation_list):
     _goals  = add_utility_values(task) if taskdetails['planning-type'] == 'oversubscription' else {}
     planner = ForbidBehaviourIterativeSMT(task, _params['bspace-cfg'], _params['base-planner-cfg'])
     plans   = planner.plan(k)
+    if len(plans) == 0:
+        return {'logs': ['No plans found by FBI-SMT.']}
     bspace  = planner.bspace
     if 'naive' in taskdetails['planner']:
         task_writer = PDDLWriter(planner.compiled_task.problem)
@@ -227,9 +229,10 @@ def solve(taskname, args):
     # read the task, then rename it and then write it back.
     # 
     # renamed_task   = renamer.Renamer().compile(_original_task).problem
-    
-    compilation_list  = [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING]]
-    compilation_list += [["up_disjunctive_conditions_remover", CompilationKind.DISJUNCTIVE_CONDITIONS_REMOVING]]
+    compilation_list  = []
+    if not taskdetails['planning-type'] == 'numerical':
+        compilation_list += [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING]]
+        compilation_list += [["up_disjunctive_conditions_remover", CompilationKind.DISJUNCTIVE_CONDITIONS_REMOVING]]
     # Apply these compilations and write the problem to a file to deal with with -,_ mistmatch.
 
     _original_task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
@@ -249,9 +252,6 @@ def solve(taskname, args):
 
     taskdetails['domainfile']  = renamed_domainfile
     taskdetails['problemfile'] = renamed_problemfile
-
-
-
 
     compilation_list += [["up_grounder", CompilationKind.GROUNDING]] if 'numerical' in taskdetails['planning-type'] else [["fast-downward-reachability-grounder", CompilationKind.GROUNDING]]
 
@@ -308,7 +308,7 @@ def main():
     os.makedirs(errorsdir, exist_ok=True)
     
     # # for dev only
-    # solve(taskname, args)
+    solve(taskname, args)
 
     try:
         solve(taskname, args)
