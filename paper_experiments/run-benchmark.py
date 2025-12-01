@@ -308,7 +308,7 @@ def main():
     os.makedirs(errorsdir, exist_ok=True)
     
     # # for dev only
-    solve(taskname, args)
+    # solve(taskname, args)
 
     try:
         solve(taskname, args)

@@ -56,6 +56,20 @@
                 "${workspaceFolder}/sandbox-benchmark-classical/resultsdir"
             ],
             "justMyCode": false
+        },
+        {
+            "name": "analyse-results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/paper_experiments/analyser.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--sandbox-dir",
+                "${workspaceFolder}/sandbox-benchmark-numerical",
+                "--outputdir",
+                "${workspaceFolder}/sandbox-benchmark-classical/results-analysis"
+            ],
+            "justMyCode": false
         }
     ]
 }

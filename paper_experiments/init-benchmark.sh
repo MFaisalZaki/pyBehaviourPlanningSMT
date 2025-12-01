@@ -13,6 +13,8 @@ pip install --no-cache up-symk
 pip install git+https://github.com/MFaisalZaki/forbiditerative.git
 pip install lark
 pip install up-fast-downward
+pip install matplotlib 
+pip install seaborn
 pip install .
 
 pip uninstall pypmt
