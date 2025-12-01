@@ -60,6 +60,8 @@ def select_plans_using_bspace(taskdetails, dims, planlist, compilation_list, is_
     from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_count import BehaviourCountSMT
     bspace_cfg = {
         "encoder": "seq",
+        # "encoder": "r2e",
+        # "encoder": "forall",
         "solver-timeout-ms": 600000,
         "solver-memorylimit-mb": 16000,
         "dims": dims,
