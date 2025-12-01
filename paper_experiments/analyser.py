@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from itertools import combinations, chain
 from collections import defaultdict
-
+from copy import deepcopy
 from utilities import getkeyvalue
 
 import os
@@ -175,7 +175,15 @@ def generate_plots(resutls, dumpdir):
         planners_groups = defaultdict(list)
         for k, k_values in q_values.items():
             planner_names.update(set(planner_name_map[planner] for planner in k_values.keys()))
-            planners_groups[f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], d['behaviour-count']) for d in details] for planner, details in k_values.items()))
+            
+            common_instances_per_planner = [set( f"{e['domain']}-{e['instance']}" for e in filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner, chain.from_iterable(k_values.values()))) for planner in k_values.keys()]
+            common_instances_per_planner = set.intersection(*common_instances_per_planner)
+            
+            filterd_details = deepcopy(k_values)
+            for planner in k_values.keys():
+                filterd_details[planner] = list(filter(lambda x: f"{x['domain']}-{x['instance']}" in common_instances_per_planner, k_values[planner]))
+
+            planners_groups[f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], d['behaviour-count']) for d in details] for planner, details in filterd_details.items()))
 
         sorted_order = sorted(planner_names)
         fig, axes = plt.subplots(1, len(planners_groups), figsize=(20, 5), sharey=False)
