@@ -211,6 +211,7 @@ def run_symk(taskdetails, dims, compilation_list):
 
     task_writer = PDDLWriter(_osp_task)
     plansstr    = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' for p in planlist]
+    if len(plansstr) == 0: return {'logs': ['No plans found by symk.']}
     bspace, selected_plans = select_plans_using_bspace(taskdetails, dims, plansstr, compilation_list, True)
     results = construct_results_file(taskdetails, _osp_task, selected_plans, bspace)
     return results | {'logs': bspace.bspace.log_msg} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
