@@ -212,11 +212,24 @@ def generate_plots(resutls, dumpdir):
         plt.tight_layout()
         plt.savefig(os.path.join(dumpdir, f'violin-bdc-{q}-{k}.pdf'), bbox_inches='tight', dpi=600)
 
-        pass
-
-    pass
-
-
+def remove_noisy_entries(raw_results):
+    # So a noisy entry is an entry that did not appear in pervious k values for the same q, domain, instance, and planner.
+    to_remove_instances = set()
+    q_values = sorted(set(e['q'] for e in raw_results))
+    k_values = sorted(set(e['k'] for e in raw_results))
+    planners_tags = set(e['planner'] for e in raw_results)
+    for q in sorted(q_values):
+        for idx, k in enumerate(k_values, start=1):
+            for planner in planners_tags:
+                # we need to diff the instance between this k and previous k values.
+                if k_values.index(k) == 0: continue
+                current_k_instances = set((e['domain'], e['instance']) for e in filter(lambda x: x['q'] == q and x['k'] == k                             and x['planner'] == planner, raw_results))
+                k_minus_1_instances = set((e['domain'], e['instance']) for e in filter(lambda x: x['q'] == q and x['k'] == k_values[k_values.index(k)-1] and x['planner'] == planner, raw_results))
+                diff = current_k_instances - k_minus_1_instances
+                if len(diff) == 0: continue
+                to_remove_instances.update(set(map(lambda x: (q, x[0], x[1]), diff)))    
+    cleaned_results = list(filter(lambda x: (x['q'], x['domain'], x['instance']) not in to_remove_instances, raw_results))
+    return cleaned_results
 
 def main():
     args = arg_parser().parse_args()
@@ -226,6 +239,9 @@ def main():
     outputdir = args.outputdir
 
     raw_results = read_raw_results(resultsdir)
+    raw_results = remove_noisy_entries(raw_results)
+
+
     stats_table = generate_summary_tables(raw_results)
 
 
