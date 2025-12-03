@@ -15,6 +15,8 @@ from utilities import getkeyvalue
 
 import os
 
+TIMEOUT_LIMIT = 1800  # seconds
+
 planner_name_map = {
     'symk': r'$\mathrm{SymK}$',
     'fi-bc': r'$\mathrm{FI_{bdc}}$',
@@ -54,7 +56,7 @@ def read_raw_results(resultsdir):
     ret_results = list()
     unsolved_tasks = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for file in map(lambda x: os.path.join(resultsdir, x), os.listdir(resultsdir)):
-        if not file.endswith('.json'): continue
+        if not os.path.basename(file).endswith('.json'): continue
         with open(file, 'r') as f:
             data = json.load(f)
         
@@ -68,29 +70,33 @@ def read_raw_results(resultsdir):
         planner = getkeyvalue(data, 'tag')
         domain  = getkeyvalue(data, 'domain')
         instance = getkeyvalue(data, 'problem')
-        q = getkeyvalue(data, 'q')
-        if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0): 
-            unsolved_tasks[q][k_value][planner].append((domain, instance))
-            continue
-
+        q        = getkeyvalue(data, 'q')
+        file_key_instance = extract_task_details(os.path.basename(file).replace(f'-{planner}-results.json',''))
+        
+        # if (q, k_value, file_key_instance[2], file_key_instance[3], planner) in [(1.0, 1000, 'None-sugar', '8', 'fbi-smt')]:
+        #     pass
+        
+        # if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0): 
+        #     unsolved_tasks[q][k_value][planner].append((domain, instance))
+        #     continue
         _processed_entry = {
             'q': q,
             'k': k_value,
             'domain': domain,
             'instance': instance,
             'planner': planner,
-            'plans': plans,
+            'plans': [] if plans is None else plans,
             'behaviour-count': getkeyvalue(data, 'behaviour-count'),
             'execution-time': execution_time,
-            'file-instance-key': extract_task_details(os.path.basename(file).replace(f'-{planner}-results.json',''))
+            'file-instance-key': file_key_instance
         }
         ret_results.append(_processed_entry)
     return ret_results, {'unsolved-tasks' : unsolved_tasks}
 
 def generate_summary_tables(raw_results):
-    q_values      = set(e['q'] for e in raw_results)
-    k_values      = set(e['k'] for e in raw_results)
-    planners_tags = set(e['planner'] for e in raw_results)
+    q_values      = set(e['q'] for e in deepcopy(raw_results))
+    k_values      = set(e['k'] for e in deepcopy(raw_results))
+    planners_tags = set(e['planner'] for e in deepcopy(raw_results))
 
     # The return table should have the following structure.
     # q, k, (coverage) planners, (execution time) planners (common instance), (behaviour count) planners
@@ -100,29 +106,26 @@ def generate_summary_tables(raw_results):
     _execution_time_details = defaultdict(lambda: defaultdict(dict))
     _planner_details = defaultdict(lambda: defaultdict(dict))
 
-    _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in raw_results)
+    # Remove entries that did not solve at least k plans.
+    _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in deepcopy(list(filter(lambda e: (len(e['plans']) >= e['k']), raw_results))))
 
     for q in sorted(q_values):
         for k in sorted(k_values):
             # do these results per pairs.
             for i in range(2, len(planners_tags)+1):
                 for planners in combinations(planners_tags, i):
-                    _planner_details[q][k] = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner, raw_results)) for planner in planners}
+                    _planner_details[q][k] = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, deepcopy(raw_results))) for planner in planners}
 
                     # del the plans to save space. 
                     for planner in planners:
                         for entry in _planner_details[q][k][planner]:
                             if not 'plans' in entry: continue
                             del entry['plans']
-                            # entry['plans'] = '-PLAN-DELIMITER-'.join(entry['plans'])
 
-                    planners_results = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner, raw_results)) for planner in planners}
+                    planners_results = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, deepcopy(raw_results))) for planner in planners}
                     planners_key = '-PLANNER-'.join(planners_results.keys())
                     # Step 1 compute coverage by counting the number of instances solved by each planner
                     _coverage_details[q][k][planners_key] = {p:_coverage_values[(q,k,p)] for p in planners}
-                    # {
-                    #     planner: len(planners_results[planner]) for planner in planners
-                    # }
 
                     _execution_time_details[q][k][planners_key]   = {}
                     _execution_time_details[q][k][planners_key] |= {
@@ -138,11 +141,11 @@ def generate_summary_tables(raw_results):
                         f'{planner}-min': round(min([e['execution-time'] for e in planners_results[planner]]), 3) if len([e['execution-time'] for e in planners_results[planner]]) > 2 else -1 for planner in planners
                     }
 
-                    common_instances_per_planner = [set( f"{e['domain']}-{e['instance']}" for e in filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner, raw_results)) for planner in planners]
+                    common_instances_per_planner = [set( e['file-instance-key'] for e in filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k  and x['planner'] == planner, deepcopy(raw_results))) for planner in planners]
                     common_instances_per_planner = set.intersection(*common_instances_per_planner)
 
                     fitlered_planners_results = {
-                        planner: sorted(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner and f"{x['domain']}-{x['instance']}" in common_instances_per_planner, raw_results), key = lambda x: f"{x['domain']}-{x['instance']}") for planner in planners
+                        planner: sorted(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k  and x['planner'] == planner and x['file-instance-key'] in common_instances_per_planner, deepcopy(raw_results)), key = lambda x: f"{x['domain']}-{x['instance']}") for planner in planners
                     }
 
                     _behaviour_count_details[q][k][planners_key] = {}
@@ -156,7 +159,7 @@ def generate_summary_tables(raw_results):
                     
                     _behaviour_count_details[q][k][planners_key] |= {
                         'common-instances-count': len(common_instances_per_planner),
-                        'common-instances': [f'{e["domain"]}-{e["instance"]}' for e in sorted(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planners[0] and f"{x['domain']}-{x['instance']}" in common_instances_per_planner, raw_results), key = lambda x: f"{x['domain']}-{x['instance']}")],
+                        'common-instances': [f'{e["domain"]}-{e["instance"]}' for e in sorted(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planners[0] and x['file-instance-key'] in common_instances_per_planner, raw_results), key = lambda x: f"{x['domain']}-{x['instance']}")],
                         'p-value': str(p_value),
                         'statistical-test': 'ttest' if len(planners) == 2 else 'anova',
                         'is-significant': str(p_value < 0.05),
@@ -246,8 +249,10 @@ def extract_task_details(taskfilename):
     domain = details[1][:details[1].rfind('-')]
     return (float(q), int(k), domain, domain_instance)
 
-def analyse_limitsouts(slurm_dumps, planners_tags):
+def analyse_limitsouts(slurm_dumps, raw_results):
     limits_outs = defaultdict(lambda: defaultdict(list))
+    planners_tags = set(e['planner'] for e in raw_results)
+    _ret_entries = list()
     for error_file in map(lambda e: os.path.join(slurm_dumps, e), filter(lambda e: e.endswith('.error'), os.listdir(slurm_dumps))):
         with open(error_file, 'r') as f:
             data = f.read().lower()
@@ -255,9 +260,35 @@ def analyse_limitsouts(slurm_dumps, planners_tags):
         assert planner_name is not None, f"Planner name not found in error file: {error_file}"
         _is_memory_out = "oom killed" in data
         _is_time_out   = "time limit" in data
-        if not _is_memory_out and not _is_time_out: 
-            continue
-        limits_outs['timeout' if _is_time_out else 'memoryout'][planner_name].append(extract_task_details(os.path.basename(error_file).replace(f'-{planner_name}.error', '')))
+        _problem_not_solved = 'validation_fail_reason' in data
+        _parse_error = 'ParseException: Expected'.lower() in data
+
+        if not _is_memory_out and not _is_time_out and not _problem_not_solved and not _parse_error: continue
+        _task_details = extract_task_details(os.path.basename(error_file).replace(f'-{planner_name}.error', ''))
+
+        _key = None
+        if _is_memory_out:
+            _key = 'memoryout'
+        elif _is_time_out:
+            _key = 'timeout'
+        elif _problem_not_solved:
+            _key = 'no-plan-found-error'
+        elif _parse_error:
+            _key = 'pddl-error'
+
+        limits_outs[_key][planner_name].append(_task_details)
+        _processed_entry = {
+            'q': _task_details[0],
+            'k': _task_details[1],
+            'domain': _task_details[2],
+            'instance': _task_details[3],
+            'planner': planner_name,
+            'plans': [],
+            'behaviour-count': 0,
+            'execution-time': TIMEOUT_LIMIT,
+            'file-instance-key': _task_details
+        }
+        _ret_entries.append(_processed_entry)
     
     q_values = sorted(set(e[0] for v in limits_outs.values() for planner_entries in v.values() for e in planner_entries))
     k_values = sorted(set(e[1] for v in limits_outs.values() for planner_entries in v.values() for e in planner_entries))
@@ -269,19 +300,37 @@ def analyse_limitsouts(slurm_dumps, planners_tags):
             for q in q_values:
                 for k in k_values:
                     ret_outs[limit_type][q][k][planner] = _stats[(q,k)]
-    return ret_outs
+    return ret_outs, _ret_entries
 
 def analyze_errors(errorsdir, planners_tags):
     error_details = defaultdict(list)
+    _ret_entries = list()
     for error_file in map(lambda e: os.path.join(errorsdir, e), filter(lambda e: e.endswith('_error.log'), os.listdir(errorsdir))):
         with open(error_file, 'r') as f:
             data = f.read().lower()
+        # Skip the validation_fail_reason since it is already handled in the limits out analysis.
+        if 'validation_fail_reason' in data: continue
+       
+       
         planner_name = next(filter(lambda p: f'{p}_error.log' in error_file, planners_tags), None)
         assert planner_name is not None, f"Planner name not found in error file: {error_file}"
+        _task_details = extract_task_details(os.path.basename(error_file).replace(f'-{planner_name}_error.log', ''))
         error_details[planner_name].append({
-            'task-details': extract_task_details(os.path.basename(error_file).replace(f'-{planner_name}.error', '')),
+            'task-details': _task_details,
             'error-message': data
         })
+        _processed_entry = {
+            'q': _task_details[0],
+            'k': _task_details[1],
+            'domain': _task_details[2],
+            'instance': _task_details[3],
+            'planner': planner_name,
+            'plans': [],
+            'behaviour-count': 0,
+            'execution-time': TIMEOUT_LIMIT,
+            'file-instance-key': _task_details
+        }
+        _ret_entries.append(_processed_entry)
     
     q_values = sorted(set(e['task-details'][0] for v in error_details.values() for e in v))
     k_values = sorted(set(e['task-details'][1] for v in error_details.values() for e in v))
@@ -292,9 +341,7 @@ def analyze_errors(errorsdir, planners_tags):
             for k in k_values:
                 ret_errors[planner][q][k] = _stats[(q,k)]
     
-    return {
-        'errors': ret_errors
-    }
+    return {'errors': ret_errors}, _ret_entries
 
 def do_sanity_check(raw_results, results):
     planners_tags = set(e['planner'] for e in raw_results)
@@ -316,6 +363,15 @@ def do_sanity_check(raw_results, results):
 
     return True
 
+def remove_wrong_duplicates(raw_results):
+    # There are some cases, were their is a valid results file but also may have a timeout/memoryout.
+    # this may happen if the solve function for the dev is not commented and this will make slurm try to solve the
+    # problem twice.
+    to_remove_entries = list()
+    for file_key, _ in filter(lambda e: e[1] > 2, Counter(e['file-instance-key'] for e in raw_results).items()):
+        to_remove_entries.extend(filter(lambda e: e['file-instance-key'] == file_key and len(e['plans']) == 0, raw_results))
+    cleaned_results = list(filter(lambda x: x not in to_remove_entries, raw_results))
+    return cleaned_results
 
 def main():
     args = arg_parser().parse_args()
@@ -325,21 +381,22 @@ def main():
     outputdir = args.outputdir
 
     raw_results, unsolved_tasks = read_raw_results(resultsdir)
-    raw_results = remove_noisy_entries(raw_results)
-
-    outs_results   = analyse_limitsouts(slurmdumps, set(e['planner'] for e in raw_results))
-    analyse_errors = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
-
-    stats_table = generate_summary_tables(raw_results)
+    outs_results, timeout_entries = analyse_limitsouts(slurmdumps, deepcopy(raw_results))
+    analyse_errors, error_entries = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
+    all_raw_results = remove_wrong_duplicates(raw_results + timeout_entries + error_entries)
+    raw_results = remove_noisy_entries(all_raw_results)
+    # all_raw_results = raw_results + timeout_entries + error_entries
+    
+    stats_table = generate_summary_tables(deepcopy(all_raw_results))
     
     # Do a sanity check to ensure that we accounted for all instances.
-    assert do_sanity_check(raw_results, stats_table | outs_results | analyse_errors | unsolved_tasks), "Sanity check failed!"
+    assert do_sanity_check(raw_results, stats_table | unsolved_tasks | outs_results | analyse_errors), "Sanity check failed!"
     
     
     generate_plots(stats_table, os.path.join(outputdir, 'plots'))
 
     with open(os.path.join(outputdir, 'summary_tables.json'), 'w') as f:
-        json.dump(stats_table | outs_results | analyse_errors | unsolved_tasks, f, indent=4)
+        json.dump(stats_table, f, indent=4)
 
     pass
 
