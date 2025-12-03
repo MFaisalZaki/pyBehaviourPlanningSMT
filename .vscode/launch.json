@@ -67,7 +67,7 @@
                 "--sandbox-dir",
                 "${workspaceFolder}/sandbox-benchmark-numerical",
                 "--outputdir",
-                "${workspaceFolder}/sandbox-benchmark-classical/results-analysis"
+                "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
             ],
             "justMyCode": false
         }

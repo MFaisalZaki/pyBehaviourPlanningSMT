@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from scipy import stats
 from itertools import combinations, chain
-from collections import defaultdict
+from collections import defaultdict, Counter
 from copy import deepcopy
 from utilities import getkeyvalue
 
@@ -94,6 +94,8 @@ def generate_summary_tables(raw_results):
     _execution_time_details = defaultdict(lambda: defaultdict(dict))
     _planner_details = defaultdict(lambda: defaultdict(dict))
 
+    _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in raw_results)
+
     for q in sorted(q_values):
         for k in sorted(k_values):
             # do these results per pairs.
@@ -110,9 +112,10 @@ def generate_summary_tables(raw_results):
                     planners_results = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and x['planner'] == planner, raw_results)) for planner in planners}
                     planners_key = '-PLANNER-'.join(planners_results.keys())
                     # Step 1 compute coverage by counting the number of instances solved by each planner
-                    _coverage_details[q][k][planners_key] = {
-                        planner: len(planners_results[planner]) for planner in planners
-                    }
+                    _coverage_details[q][k][planners_key] = {p:_coverage_values[(q,k,p)] for p in planners}
+                    # {
+                    #     planner: len(planners_results[planner]) for planner in planners
+                    # }
 
                     _execution_time_details[q][k][planners_key]   = {}
                     _execution_time_details[q][k][planners_key] |= {
