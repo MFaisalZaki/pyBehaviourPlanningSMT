@@ -106,6 +106,7 @@ def generate_summary_tables(raw_results):
                     # del the plans to save space. 
                     for planner in planners:
                         for entry in _planner_details[q][k][planner]:
+                            if not 'plans' in entry: continue
                             del entry['plans']
                             # entry['plans'] = '-PLAN-DELIMITER-'.join(entry['plans'])
 

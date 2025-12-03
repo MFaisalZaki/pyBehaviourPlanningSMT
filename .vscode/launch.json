@@ -65,9 +65,9 @@
             "console": "integratedTerminal",
             "args": [
                 "--sandbox-dir",
-                "${workspaceFolder}/sandbox-benchmark-numerical",
+                "${workspaceFolder}/sandbox-benchmark-classical",
                 "--outputdir",
-                "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
+                "${workspaceFolder}/sandbox-benchmark-classical/results-analysis"
             ],
             "justMyCode": false
         }
