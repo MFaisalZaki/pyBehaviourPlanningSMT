@@ -26,7 +26,7 @@ class GoalPredicatesOrderingSimulator(DimSimulator):
         for t, state in enumerate(plan.states):
             for g in self.vars:
                 _time_step_history[g].append(state.get_value(g).is_true())
-        return 'gpo:' + '->'.join(map(lambda e: str(e[0]), sorted([(g, next((i for i, x in enumerate(_time_step_history[g]) if x), -1)) for g in vars], key=lambda e:e[1])))
+        return 'gpo:' + '->'.join(map(lambda e: str(e[0]), sorted([(g, next((i for i, x in enumerate(_time_step_history[g]) if x), -1)) for g in self.vars], key=lambda e:e[1])))
 
 class MakespanOptimalCostSimulator(DimSimulator):
     def __init__(self, task, addinfo):
