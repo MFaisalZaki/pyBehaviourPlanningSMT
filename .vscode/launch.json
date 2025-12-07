@@ -20,18 +20,18 @@
             "args": [
                 "--sandbox-dir",
                 // "${workspaceFolder}/sandbox-benchmark-classical/",
-                "${workspaceFolder}/sandbox-benchmark-numerical/",
-                // "${workspaceFolder}/sandbox-benchmark-oversubscription",
+                // "${workspaceFolder}/sandbox-benchmark-numerical/",
+                "${workspaceFolder}/sandbox-benchmark-oversubscription",
                 "--planning-tasks-dir",
-                // "${workspaceFolder}/sandbox-benchmark/classical-domains",
-                "${workspaceFolder}/sandbox-benchmark/numeric-domains",
+                "${workspaceFolder}/sandbox-benchmark/classical-domains",
+                // "${workspaceFolder}/sandbox-benchmark/numeric-domains",
                 "--resources-dir",
-                // "${workspaceFolder}/paper_experiments/data/classical-domains-ru-info",
-                "${workspaceFolder}/paper_experiments/data/functions-domains-info",
+                "${workspaceFolder}/paper_experiments/data/classical-domains-ru-info",
+                // "${workspaceFolder}/paper_experiments/data/functions-domains-info",
                 "--planning-type",
                 // "classical"
-                "numerical"
-                // "oversubscription"
+                // "numerical"
+                "oversubscription"
                 
 
             ],
@@ -51,7 +51,7 @@
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-100-classical-2006-rovers-1-fi-bc.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/1.0-5-numerical-None-rover-linear-1-fbi-smt.json",
-                "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/1.0-1000-oversubscription-2004-airport-18-symk.json",
+                "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/0.25-5-oversubscription-2006-rovers-6-fbi-smt.json",
                 "--outputdir",
                 "${workspaceFolder}/sandbox-benchmark-classical/resultsdir"
             ],

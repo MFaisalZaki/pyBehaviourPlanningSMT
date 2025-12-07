@@ -32,7 +32,7 @@ class MakespanOptimalCostSMT(CostBoundSMT):
         else:
             # this means that the planning problem is an oversubscription planning problem.
             # so we need to set the actions_cost to be less the the bound factor * len(encoder).
-            cost_bound_step = int(self.cost_bound_factor * len(encoder))
+            cost_bound_step = int(self.cost_bound_factor * self.optimal_plan_length)
             self.encodings.append(self.actions_cost <= z3.IntVal(cost_bound_step, ctx=encoder.ctx))
             # limit the horizon variable to the cost bound value.
             self.encodings.append(encoder.horizon_var <= z3.IntVal(cost_bound_step, encoder.ctx))

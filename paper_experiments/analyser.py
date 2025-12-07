@@ -44,13 +44,6 @@ plt.rcParams.update({
     'mathtext.fontset': 'cm'
 })
 
-def rename_planner(planner_tag):
-    if 'symk' in planner_tag: return 'symk'
-    if 'fi-bc' in planner_tag: return 'fibc'
-    if 'fbi-smt-naive' in planner_tag: return 'fbismtnaive'
-    if 'fbi-smt' in planner_tag: return 'fbismt'
-    return planner_tag
-
 def arg_parser():
     parser = argparse.ArgumentParser(description="Generate SLURM tasks for running experiments.")
     parser.add_argument('--sandbox-dir', type=str, required=True, help='Path to the task file.')
@@ -58,21 +51,26 @@ def arg_parser():
     return parser
 
 def parse_filename(taskfilename):
+
+    if 'naive' in taskfilename:
+        pass
+
     task_type = next(filter(lambda t: t in taskfilename, ['classical', 'numerical', 'oversubscription']), None)
     assert task_type is not None, f"Task type not found in task filename: {taskfilename}"
     details = taskfilename.split(f'-{task_type}-')
     q, k = details[0].split('-')[:2]
-
-    _planner_name = next(filter(lambda e: e in taskfilename, planner_name_map.keys()), None)
-    assert _planner_name is not None, f"Planner name not found in filename: {taskfilename}"
-    _domain_instance = taskfilename.replace(f'{q}-{k}-{task_type}-', '').replace('-results.json', '').replace(f'-{_planner_name}', '')
-
+    # Now let's accquire the planner's name.
+    _domain_instance = details[1].replace('-results.json', '')
+    for tag in sorted(planner_name_map.keys(), reverse=True):
+        _domain_instance = _domain_instance.replace(f'-{tag}', '')
+    _domain_instance = _domain_instance.replace('-naive', '')
+    _planner_name = taskfilename.replace(f'{q}-{k}-{task_type}-{_domain_instance}-', '').replace('-results.json', '')
     return {
         'q': float(q),
         'k': int(k),
         'domain': _domain_instance[:_domain_instance.rfind('-')],
         'instance': _domain_instance[_domain_instance.rfind('-')+1:],
-        'planner': rename_planner(_planner_name)
+        'planner': _planner_name
     }
 
 def read_raw_results(resultsdir):
@@ -99,34 +97,21 @@ def read_raw_results(resultsdir):
         # if (q, k_value, file_key_instance[2], file_key_instance[3], planner) in [(1.0, 1000, 'None-sugar', '8', 'fbi-smt')]:
         #     pass
         
-        # if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0): 
-        #     unsolved_tasks[q][k_value][planner].append((domain, instance))
-        #     continue
-
-        if q is None:
-            _filename = parse_filename(os.path.basename(file))
-            q = _filename['q']
-            k_value = _filename['k']
-            domain = _filename['domain']
-            instance = _filename['instance']
-            planner = _filename['planner']
-            pass
-        else:
-            pass
+        if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0):  continue
 
         _processed_entry = {
             'q': q,
             'k': k_value,
             'domain': domain,
             'instance': instance,
-            'planner': rename_planner(planner),
+            'planner': planner,
             'plans': [] if plans is None else plans,
             'behaviour-count': getkeyvalue(data, 'behaviour-count'),
             'execution-time': execution_time,
             'file-instance-key': file_key_instance
         }
         ret_results.append(_processed_entry)
-    return ret_results, {'unsolved-tasks' : unsolved_tasks}
+    return ret_results
 
 def generate_summary_tables(raw_results):
     q_values      = set(e['q'] for e in deepcopy(raw_results))
@@ -142,7 +127,7 @@ def generate_summary_tables(raw_results):
     _planner_details = defaultdict(lambda: defaultdict(dict))
 
     # Remove entries that did not solve at least k plans.
-    _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in deepcopy(list(filter(lambda e: (len(e['plans']) >= e['k']), raw_results))))
+    _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in filter(lambda e: (len(e['plans']) >= e['k']), raw_results))
 
     for q in sorted(q_values):
         print(f"Processing q={q} ...")
@@ -153,13 +138,13 @@ def generate_summary_tables(raw_results):
                 for planners in combinations(planners_tags, i):
                     _planner_details[q][k] = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, deepcopy(raw_results))) for planner in planners}
 
-                    # del the plans to save space. 
+                    # # del the plans to save space. 
                     for planner in planners:
                         for entry in _planner_details[q][k][planner]:
                             if not 'plans' in entry: continue
-                            del entry['plans']
+                            entry['plans'] = []
 
-                    planners_results = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, deepcopy(raw_results))) for planner in planners}
+                    planners_results = {planner: list(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, raw_results)) for planner in planners}
                     planners_key = '-PLANNER-'.join(planners_results.keys())
                     # Step 1 compute coverage by counting the number of instances solved by each planner
                     _coverage_details[q][k][planners_key] = {p:_coverage_values[(q,k,p)] for p in planners}
@@ -178,11 +163,11 @@ def generate_summary_tables(raw_results):
                         f'{planner}-min': round(min([e['execution-time'] for e in planners_results[planner]]), 3) if len([e['execution-time'] for e in planners_results[planner]]) > 2 else -1 for planner in planners
                     }
 
-                    common_instances_per_planner = [set( e['file-instance-key'] for e in filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k  and x['planner'] == planner, deepcopy(raw_results))) for planner in planners]
+                    common_instances_per_planner = [set( e['file-instance-key'] for e in filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k and x['planner'] == planner, raw_results)) for planner in planners]
                     common_instances_per_planner = set.intersection(*common_instances_per_planner)
 
                     fitlered_planners_results = {
-                        planner: sorted(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k  and x['planner'] == planner and x['file-instance-key'] in common_instances_per_planner, deepcopy(raw_results)), key = lambda x: f"{x['domain']}-{x['instance']}") for planner in planners
+                        planner: sorted(filter(lambda x: x['q'] == q and x['k'] == k and len(x['plans']) >= k  and x['planner'] == planner and x['file-instance-key'] in common_instances_per_planner, raw_results), key = lambda x: f"{x['domain']}-{x['instance']}") for planner in planners
                     }
 
                     _behaviour_count_details[q][k][planners_key] = {}
@@ -408,27 +393,27 @@ def remove_wrong_duplicates(raw_results):
 def main():
     args = arg_parser().parse_args()
     resultsdir = os.path.join(args.sandbox_dir, 'resultsdir')
-    errorsdir = os.path.join(args.sandbox_dir, 'errors')
-    slurmdumps = os.path.join(args.sandbox_dir, 'slurm-dumps')
     outputdir = args.outputdir
 
-    raw_results, unsolved_tasks = read_raw_results(resultsdir)
-    # first remove the unsolved tasks, we define a task is solved if it has at least k plans.
-    raw_results = list(filter(lambda e: len(e['plans']) >= e['k'], raw_results))
-    
-    outs_results, timeout_entries = analyse_limitsouts(slurmdumps, deepcopy(raw_results))
-    analyse_errors, error_entries = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
-    all_raw_results = remove_wrong_duplicates(raw_results)
-    raw_results = remove_noisy_entries(all_raw_results)
-    # all_raw_results = raw_results + timeout_entries + error_entries
-    
-    stats_table = generate_summary_tables(deepcopy(all_raw_results))
-    
-    # Do a sanity check to ensure that we accounted for all instances.
-    assert do_sanity_check(raw_results, stats_table | unsolved_tasks | outs_results | analyse_errors), "Sanity check failed!"
-    
-    
+    raw_results = read_raw_results(resultsdir)
+
+    stats_table = generate_summary_tables(deepcopy(raw_results))
     generate_plots(stats_table, os.path.join(outputdir, 'plots'))
+
+
+    # outs_results, timeout_entries = analyse_limitsouts(slurmdumps, deepcopy(raw_results))
+    # analyse_errors, error_entries = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
+    # all_raw_results = remove_wrong_duplicates(raw_results)
+    # raw_results = remove_noisy_entries(all_raw_results)
+    # # all_raw_results = raw_results + timeout_entries + error_entries
+    
+    # 
+    
+    # # Do a sanity check to ensure that we accounted for all instances.
+    # assert do_sanity_check(raw_results, stats_table | unsolved_tasks | outs_results | analyse_errors), "Sanity check failed!"
+    
+    
+    
 
     with open(os.path.join(outputdir, 'summary_tables.json'), 'w') as f:
         json.dump(stats_table, f, indent=4)
