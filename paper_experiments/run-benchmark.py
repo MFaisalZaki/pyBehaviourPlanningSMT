@@ -139,7 +139,7 @@ def run_fbi(taskdetails, dims, compilation_list):
 
     bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, plans)
     results = construct_results_file(taskdetails, task, selected_plans)
-    return results | {'logs': planner.log_msg, 'bspace-frq': planner.bspace._behaviour_frequency} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
+    return results | {'logs': planner.log_msg} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
 def run_fi(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))

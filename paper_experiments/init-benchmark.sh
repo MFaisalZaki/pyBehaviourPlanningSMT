@@ -17,7 +17,7 @@ pip install matplotlib
 pip install seaborn
 pip install .
 
-pip uninstall pypmt
+pip uninstall pypmt -y
 pip install git+https://github.com/pyPMT/pyPMT.git@d44efb71746b3a91e7fb1926b4405bd14f9df33b
 
 mkdir -p $(pwd)/sandbox-benchmark/classical-domains
