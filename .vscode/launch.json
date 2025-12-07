@@ -77,6 +77,20 @@
                 "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
             ],
             "justMyCode": false
+        },
+        {
+            "name": "refix-bc",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/paper_experiments/recompute-bc.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--results", "${workspaceFolder}/sandbox-benchmark-oversubscription/resultsdir",
+                "--outputdir", "${workspaceFolder}/sandbox-benchmark-oversubscription/resultsdir-refixed",
+                "--planning-tasks", "${workspaceFolder}/sandbox-benchmark/classical-domains",
+                "--resources", "${workspaceFolder}/paper_experiments/data/classical-domains-ru-info"
+            ]
         }
     ]
 }

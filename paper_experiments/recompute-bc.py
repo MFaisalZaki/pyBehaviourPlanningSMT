@@ -7,9 +7,6 @@ from copy import deepcopy
 
 from utilities import getkeyvalue
 
-from utilities import getkeyvalue
-
-
 classical_instances = [
     "(2000, schedule, 9)",
     "(None, blocks-3op, 5)",
@@ -1089,29 +1086,6 @@ classical_instances = [
     "(None, ferry, 30)"
 ]
 
-
-# Allow some space for simulating the plans and extracting the behaviours.
-timelimit_map = {
-    'fbi-smt' : '00:32:00',
-    'fbi-smt-naive' : '00:32:00',
-    'fi-bc': '00:45:00',
-    'symk': '00:45:00',
-}   
-
-def wrap_cmd(taskname, cmd, timelimt, memorylimit, slurmdumpdir):
-    return f"""#!/bin/bash
-#SBATCH --job-name={taskname}
-#SBATCH -e {slurmdumpdir}/{taskname}.error
-#SBATCH -o {slurmdumpdir}/{taskname}.output
-#SBATCH --cpus-per-task=1
-#SBATCH --mem={memorylimit}
-#SBATCH --time={timelimt}
-
-module load apptainer
-
-{cmd}
-"""
-
 def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdumpdir:str, selected_instances:set):
     # First collect the resoruces information requried.
     resources = _get_resources_details(resourcesfiledir)
@@ -1201,84 +1175,15 @@ def _get_planning_domains(directory_path):
 
 def arg_parser():
     parser = argparse.ArgumentParser(description="Generate SLURM tasks for running experiments.")
-    parser.add_argument('--sandbox-dir', type=str, required=True, help='Path to the sandbox directory.')
-    parser.add_argument('--planning-tasks-dir', type=str, required=True, help='Directory containing planning tasks.')
-    parser.add_argument('--resources-dir', type=str, required=False, default='', help='Directory containing resource files for tasks.')
-    parser.add_argument('--planning-type', type=str, required=False, default='classical', help='Type of planning tasks to consider (classical/oversubscription/numerical).')
+    parser.add_argument('--results', type=str, required=True, help='Path to the task file.')
+    parser.add_argument('--outputdir', type=str, required=True, help='Directory to store output files.')
+    parser.add_argument('--planning-tasks', type=str, required=True, help='Path to the planning tasks file.')
+    parser.add_argument('--resources', type=str, required=True, help='Path to the resources file.')
     return parser
 
-def wrap_tasks_in_slurm_scripts(sandbox, tasks, slurmdumpdir, timelimit='00:30:00', memorylimit='16G'):
-    
-    scriptfile = os.path.join('/app', 'paper_experiments', 'run-benchmark.py')
-    sandboxdir = os.path.basename(os.path.dirname(slurmdumpdir))
-    
-    tasksdir = os.path.join('/app', sandboxdir, 'tasksdir')
-    os.makedirs(tasksdir, exist_ok=True)
-    
-    resultsdir = os.path.join('/app', sandboxdir, 'resultsdir')
-    os.makedirs(resultsdir, exist_ok=True)
-    slurm_scripts = []
-    for task in tasks:
-        taskfile = os.path.join(tasksdir, f"{task['filename']}")
-        with open(taskfile, 'w') as f:
-            json.dump(task, f, indent=4)
-        rundir = os.path.join(os.path.dirname(slurmdumpdir), 'rundir', task['filename'].replace('.json',''))
-        os.makedirs(rundir, exist_ok=True)
 
-        runcmd = f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}"
-        cmd = [f"apptainer run --cleanenv --bind {sandbox}:{sandboxdir} planning-benchmarks.sif {runcmd}"]
-        slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit_map[task['planner']], memorylimit, slurmdumpdir)
-        slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
-    return slurm_scripts
 
-def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type):
-    _tasks = []
-    ru_info_dumps = os.path.join(sandboxdir, 'resource-usage-dumps')
-    os.makedirs(ru_info_dumps, exist_ok=True)
+if __name__ == '__main__':
+    args = arg_parser().parse_args()
 
-    q_list   = []
-    planners = []
-    selected_instances = set()
-    match planning_type:
-        case 'classical':
-            q_list   = [1.0, 2.0]
-            planners = ['fbi-smt', 'fbi-smt-naive', 'fi-bc']
-            selected_instances = set(classical_instances)
-        case 'oversubscription':
-            q_list = [0.25, 0.5, 0.75, 1.0]
-            planners = ['fbi-smt', 'fbi-smt-naive', 'symk']
-            selected_instances = set(classical_instances)
-        case 'numerical':
-            q_list = [1.0, 2.0]
-            planners = ['fbi-smt', 'fbi-smt-naive']
-        case _:
-            q_list = []
-
-    for q in q_list:
-        for k in [5,10,100,1000]:
-            for planner in planners:
-                for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, selected_instances):
-                    _tasks.append(task | { 'sandbox-dir' : sandboxdir, 'planning-type': planning_type, 'planner' : planner, 'q': q, 'k-plans': k, 'filename': f"{q}-{k}-{planning_type}-{task['ipc_year']}-{task['domainname']}-{task['instanceno']}-{planner}.json"})
-    return _tasks
-
-def main():
-    parser = arg_parser()
-    args = parser.parse_args()
-
-    sandbox_dir = args.sandbox_dir
-    planning_tasks_dir = args.planning_tasks_dir
-    resources_dir = args.resources_dir
-    planning_type = args.planning_type
-    slurmdumpdir  = os.path.join(sandbox_dir, 'slurm-dumps')
-    os.makedirs(slurmdumpdir, exist_ok=True)
-
-    print(f"Generating SLURM scripts for planning tasks in {planning_tasks_dir} with resources from {resources_dir} and planning type {planning_type}...")
-
-    slurm_scripts = wrap_tasks_in_slurm_scripts(sandbox_dir, generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir)
-
-    for idx, (taskname, script) in enumerate(slurm_scripts):
-        with open(os.path.join(slurmdumpdir, f"{idx}_{taskname}.sh"), 'w') as f:
-            f.write(script)
-
-if __name__ == "__main__":
-    main()
+    pass
