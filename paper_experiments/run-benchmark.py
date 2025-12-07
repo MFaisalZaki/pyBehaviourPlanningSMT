@@ -21,7 +21,16 @@ from unified_planning.engines import PlanGenerationResultStatus as ResultsStatus
 from behaviour_planning.over_domain_models.smt.shortcuts import GoalPredicatesOrderingSMT, MakespanOptimalCostSMT, ResourceCountSMT, UtilityValueSMT, FunctionsSMT
 from behaviour_planning.over_domain_models.smt.shortcuts import ForbidBehaviourIterativeSMT
 
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import GoalPredicatesOrderingSimulator, MakespanOptimalCostSimulator, ResourceCountSimulator, UtilityValueSimulator, FunctionsSimulator
+
 from behaviour_planning.over_domain_models.smt.fbi.planner.planner import ForbidBehaviourIterativeSMT
+
+def convert_smt_dims_to_simulator_dims(dims):
+    sim_dims = []
+    for dclass, addinfo in dims:
+        sim_dims.append([eval(dclass.__name__.replace('SMT', 'Simulator')), addinfo])
+    return sim_dims
 
 def arg_parser():
     parser = argparse.ArgumentParser(description="Generate SLURM tasks for running experiments.")
@@ -37,7 +46,7 @@ def add_utility_values(task):
     task.add_quality_metric(up.model.metrics.Oversubscription(goals, task.environment))
     return goals
 
-def construct_results_file(taskdetails, task, plans, bspace):
+def construct_results_file(taskdetails, task, plans):
     task_writer = PDDLWriter(task)
     resultsfile = {
         'plans': [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in plans],
@@ -56,7 +65,13 @@ def construct_results_file(taskdetails, task, plans, bspace):
     }
     return resultsfile
 
-def select_plans_using_bspace(taskdetails, dims, planlist, compilation_list, is_oversubscription_planning):
+def select_plans_using_bspace_simulator(taskdetails, task, dims, planslist):
+    from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
+    bspace = BehaviourCountSimulator(task, planslist, dims)
+    return bspace, bspace.selected_plans(taskdetails['k-plans'])
+
+
+def select_plans_using_bspace_smt(taskdetails, dims, planlist, compilation_list, is_oversubscription_planning):
     from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_count import BehaviourCountSMT
     bspace_cfg = {
         "encoder": "seq",
@@ -115,23 +130,20 @@ def run_fbi(taskdetails, dims, compilation_list):
     _goals  = add_utility_values(task) if taskdetails['planning-type'] == 'oversubscription' else {}
     planner = ForbidBehaviourIterativeSMT(task, _params['bspace-cfg'], _params['base-planner-cfg'])
     plans   = planner.plan(k)
-    if len(plans) == 0:
-        return {'logs': ['No plans found by FBI-SMT.']}
-    bspace  = planner.bspace
-    if 'naive' in taskdetails['planner']:
-        task_writer = PDDLWriter(planner.compiled_task.problem)
-        task_writer = PDDLWriter(planner.basic_task)
-        _plans_str = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' for p in plans]
-        bspace, select_plans = select_plans_using_bspace(taskdetails, dims, _plans_str, compilation_list, taskdetails['planning-type'] == 'oversubscription')
-        plans = list(chain.from_iterable(bspace.selected_plans_list.values()))
+    dims = convert_smt_dims_to_simulator_dims(dims)
+    # If the planning task is oversub update the addinfo
+    if taskdetails['planning-type'] == 'oversubscription':
+        for idx, (dclass, addinfo) in enumerate(dims):
+            if dclass.__name__ == 'UtilityValueSimulator':
+                dims[idx][1] |= {'goals-utilities': _goals}
 
-    results = construct_results_file(taskdetails, task, plans, bspace)
-    return results | {'logs': planner.log_msg} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
+    bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, plans)
+    results = construct_results_file(taskdetails, task, selected_plans)
+    return results | {'logs': planner.log_msg, 'bspace-frq': planner.bspace._behaviour_frequency} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
 def run_fi(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
     os.makedirs(tmpdir, exist_ok=True)
-
     cmd  = [sys.executable]
     cmd += ["-m"]
     cmd += ["forbiditerative.plan"]
@@ -143,7 +155,6 @@ def run_fi(taskdetails, dims, compilation_list):
     cmd += [taskdetails['problemfile']]
     cmd += ["--number-of-plans"]
     cmd += [str(taskdetails['k-plans'])]
-    # cmd += ["1000"]
     cmd += ["--quality-bound"]
     cmd += [str(taskdetails['q'])]
     cmd += ["--symmetries"]
@@ -160,23 +171,22 @@ def run_fi(taskdetails, dims, compilation_list):
         output = subprocess.check_output(cmd, env=fienv, cwd=tmpdir)
     except SubprocessError as e:
         logs.append(str(e))
-        return {}
-    
-    planlist = []
-    found_plans = os.path.join(tmpdir, 'found_plans', 'done')
-    if not os.path.exists(found_plans): return {}
-    for plan in os.listdir(found_plans):
-        with open(os.path.join(found_plans, plan), 'r') as f:
-            plan = f.read()
-            if not plan in planlist: planlist.append(plan)
-    
-    bspace, selected_plans = select_plans_using_bspace(taskdetails, dims, planlist, compilation_list, False)
-    
-    task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
-    results = construct_results_file(taskdetails, task, selected_plans, bspace)
-    task_writer = PDDLWriter(task)
-    all_plans = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in chain.from_iterable(bspace.selected_plans_list.values())]
-    return results | {'logs': logs + bspace.bspace.log_msg, 'all-plans': all_plans, 'diff-count': len(all_plans) - len(selected_plans)}
+    finally:    
+        planlist = []
+        found_plans = os.path.join(tmpdir, 'found_plans', 'done')
+        if not os.path.exists(found_plans): return {}
+        for plan in os.listdir(found_plans):
+            with open(os.path.join(found_plans, plan), 'r') as f:
+                plan = f.read()
+                if not plan in planlist: planlist.append(plan)
+
+        task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), planlist))
+        # For FI we are testing the goal predicate ordering
+        dims = convert_smt_dims_to_simulator_dims(dims)
+        bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
+        results = construct_results_file(taskdetails, task, selected_plans)
+        return results | {'logs': logs}
 
 def run_symk(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
@@ -193,28 +203,35 @@ def run_symk(taskdetails, dims, compilation_list):
             assert plan is not None, "No plan found by symk"
             cost_bound = int(len(plan.actions) * q)
 
-    _osp_task = deepcopy(task)
+
+    
     _goals  = {}
     if taskdetails['planning-type'] == 'oversubscription':
-        _goals  = add_utility_values(_osp_task) 
-        _osp_task.goals.clear()
+        _goals  = add_utility_values(task) 
+        task.goals.clear()
+    
+    for idx, (dclass, addinfo) in enumerate(dims):
+        if dclass.__name__ in ['MakespanOptimalCostSMT', 'CostBoundSMT']:
+            dims[idx][1] |= {'optimal-plan-length': len(plan.actions), 'is-oversubscription': taskdetails['planning-type'] == 'oversubscription'}
+        elif dclass.__name__ == 'UtilityValueSMT':
+            dims[idx][1] |= {'goals-utilities': _goals}
+
     # now remove the hard goals then generate k plans with different utilities.
     with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:        
         with AnytimePlanner(name='symk', params={"symk_search_time_limit": "1800",
                                                  "plan_cost_bound": 
                                                  cost_bound, "number_of_plans": k}) as planner:
-            for i, result in enumerate(planner.get_solutions(_osp_task)):
+            for i, result in enumerate(planner.get_solutions(task)):
                 if result.status == ResultsStatus.INTERMEDIATE:
                     planlist.append(result.plan) if i < k else None
     
     planlist = list(filter(lambda p: len(p.actions) > 0, planlist))
-
-    task_writer = PDDLWriter(_osp_task)
-    plansstr    = [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' for p in planlist]
-    if len(plansstr) == 0: return {'logs': ['No plans found by symk.']}
-    bspace, selected_plans = select_plans_using_bspace(taskdetails, dims, plansstr, compilation_list, True)
-    results = construct_results_file(taskdetails, _osp_task, selected_plans, bspace)
-    return results | {'logs': bspace.bspace.log_msg} | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
+    # I hate this but let's rewrtite the plans to work with 
+    # planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, PDDLWriter(task).get_plan(p)), planlist))
+    dims = convert_smt_dims_to_simulator_dims(dims)
+    bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
+    results = construct_results_file(taskdetails, task, selected_plans)
+    return results | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
 def solve(taskname, args):
 
@@ -309,6 +326,7 @@ def main():
     taskname = os.path.basename(args.taskfile).replace('.json','')
     errorsdir = os.path.join(sandbox_dir, 'errors')
     os.makedirs(errorsdir, exist_ok=True)
+    os.makedirs(args.outputdir, exist_ok=True)
     
     # # for dev only
     # solve(taskname, args)

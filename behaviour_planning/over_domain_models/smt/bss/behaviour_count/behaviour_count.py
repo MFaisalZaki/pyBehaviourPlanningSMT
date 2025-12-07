@@ -49,7 +49,9 @@ class BehaviourCountSMT:
         self.selected_plans_list = defaultdict(list)
         for i, plan in enumerate(updated_planlist):
             ret = self.bspace.plan_behaviour(plan, i=i, return_plan=False)
-            if ret is None: self.bspace.log_msg.append(f'Plan {i} is not satisfiable.')
+            if ret is None: 
+                self.bspace.log_msg.append(f'Plan {i} is not satisfiable.')
+                continue
             setattr(plan, 'behaviour', ' ^ '.join(list(map(lambda s : f'({str(s)})', self._flatten_expr(ret)))))
             self.selected_plans_list[ret].append(plan)
             self.colleted_behaviours.add(ret)
@@ -89,7 +91,7 @@ class BehaviourCountSMT:
             extra_info = {}
             if dim_class.__name__ in ['MakespanOptimalCostSMT', 'CostBoundSMT']:
                 extra_info.update({
-                    'optimal-plan-length': 0,
+                    # 'optimal-plan-length': 0,
                     'cost-bound-factor' : 1.0,
                     'is-oversubscription': is_oversubscription_planning})
                 additional_information_updates.append((idx, dim_additional_information | extra_info))
@@ -112,3 +114,4 @@ class BehaviourCountSMT:
 
     def logs(self):
         return self.bspace.log_msg
+

@@ -1274,7 +1274,7 @@ def main():
 
     slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir)
 
-    for idx, (taskname, script) in enumerate(slurm_scripts[::-1]):
+    for idx, (taskname, script) in enumerate(slurm_scripts):
         with open(os.path.join(slurmdumpdir, f"{idx}_{taskname}.sh"), 'w') as f:
             f.write(script)
 

@@ -396,7 +396,7 @@ def main():
     outputdir = args.outputdir
 
     raw_results = read_raw_results(resultsdir)
-
+    raw_results = remove_noisy_entries(raw_results)
     stats_table = generate_summary_tables(deepcopy(raw_results))
     generate_plots(stats_table, os.path.join(outputdir, 'plots'))
 
@@ -404,7 +404,7 @@ def main():
     # outs_results, timeout_entries = analyse_limitsouts(slurmdumps, deepcopy(raw_results))
     # analyse_errors, error_entries = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
     # all_raw_results = remove_wrong_duplicates(raw_results)
-    # raw_results = remove_noisy_entries(all_raw_results)
+    
     # # all_raw_results = raw_results + timeout_entries + error_entries
     
     # 

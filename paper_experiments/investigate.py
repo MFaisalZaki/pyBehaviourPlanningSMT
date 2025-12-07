@@ -5,6 +5,8 @@ results_dir = '/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-ov
 
 raw_results = read_raw_results(results_dir)
 
+symk  = list(filter(lambda x: x['q'] == 0.25 and x['k'] == 5  and x['planner'] == 'fbi-smt-naive', raw_results))
+
 smt  = list(filter(lambda x: x['q'] == 0.25 and x['k'] == 5  and x['planner'] == 'fbi-smt', raw_results))
 smtnaive = list(filter(lambda x: x['q'] == 0.25 and x['k'] == 5  and x['planner'] == 'fbi-smt-naive', raw_results))
 
