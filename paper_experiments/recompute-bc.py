@@ -4,8 +4,17 @@ import json
 import importlib.util
 from collections import defaultdict
 from copy import deepcopy
+import tempfile
+
+import unified_planning as up
 
 from utilities import getkeyvalue
+from unified_planning.shortcuts import CompilationKind, Compiler
+from unified_planning.io import PDDLReader, PDDLWriter
+
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import GoalPredicatesOrderingSimulator, MakespanOptimalCostSimulator, ResourceCountSimulator, UtilityValueSimulator, FunctionsSimulator
+
 
 classical_instances = [
     "(2000, schedule, 9)",
@@ -1181,9 +1190,128 @@ def arg_parser():
     parser.add_argument('--resources', type=str, required=True, help='Path to the resources file.')
     return parser
 
+def read_results_files(directory:str):
+    results_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.json'):
+                results_files.append(os.path.join(root, file))
+    return results_files
+
+
+def select_plans_using_bspace_simulator(taskdetails, task, dims, planslist):
+    from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
+    bspace = BehaviourCountSimulator(task, planslist, dims)
+    return bspace, bspace.selected_plans(taskdetails['k-plans'])
+
+def add_utility_values(task):
+    from unified_planning.model.walkers.free_vars import FreeVarsExtractor
+    vars = next(map(lambda expr: FreeVarsExtractor().get(expr), task.goals), None)
+    if vars is None: return {}
+    goals = {g: (i+1)*2 for i, g in enumerate(vars)}
+    task.add_quality_metric(up.model.metrics.Oversubscription(goals, task.environment))
+    return goals
+
+def construct_results_file(taskdetails, task, plans):
+    task_writer = PDDLWriter(task)
+    resultsfile = {
+        'plans': [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in plans],
+        'diversity-scores': {
+            'behaviour-count': len(set(p.behaviour for p in plans))
+        },
+        'info' : {
+            'domain' : os.path.basename(os.path.dirname(taskdetails['domainfile-name'])) + '/' + os.path.basename(taskdetails['domainfile-name']),
+            'problem': os.path.basename(taskdetails['problemfile-name']),
+            'planner': taskdetails['planner'],
+            'tag' : taskdetails['planner'],
+            'planning-type': taskdetails['planning-type'],
+            'k': taskdetails['k-plans'],
+            'q': taskdetails['q']
+        },
+    }
+    return resultsfile
+
+def fix_results(taskfile, tasks_details, outputdir):
+    tmpdir = os.path.join(outputdir, '..', 'tmp')
+    os.makedirs(tmpdir, exist_ok=True)
+    with open(taskfile, 'r') as f:
+        results_data = json.load(f)
+
+    domain  = getkeyvalue(results_data, 'domain')
+    problem = getkeyvalue(results_data, 'problem')
+
+    abstract_domain = lambda e: os.path.basename(os.path.dirname(e['domainfile'])) + '/' + os.path.basename(e['domainfile'])
+    abstract_problem = lambda e: os.path.basename(e['problemfile'])
+
+    taskdetails = next(filter(lambda e: abstract_domain(e) == domain and abstract_problem(e) == problem, tasks_details), None)
+    assert taskdetails is not None, f"Task details not found for domain: {domain}, problem: {problem}"
+
+
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:
+        # Do all
+        compilation_list  = []
+        compilation_list += [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING]]
+        compilation_list += [["up_disjunctive_conditions_remover", CompilationKind.DISJUNCTIVE_CONDITIONS_REMOVING]]
+        _original_task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+        names = [name for name, _ in compilation_list]
+        compilationkinds = [kind for _, kind in compilation_list]
+        with Compiler(names=names, compilation_kinds=compilationkinds) as compiler:
+            compiled_task = compiler.compile(_original_task)
+
+        _task_writer   = PDDLWriter(compiled_task.problem)
+        renamed_domainfile  = os.path.join(tmpdir, 'renamed-domain.pddl')
+        renamed_problemfile = os.path.join(tmpdir, 'renamed-problem.pddl')
+        _task_writer.write_domain(renamed_domainfile)
+        _task_writer.write_problem(renamed_problemfile)
+
+        taskdetails['domainfile-name']  = taskdetails['domainfile']
+        taskdetails['problemfile-name'] = taskdetails['problemfile']
+
+        taskdetails['domainfile']  = renamed_domainfile
+        taskdetails['problemfile'] = renamed_problemfile
+
+        
+        task = compiled_task.problem
+        _goals  = add_utility_values(task)
+
+        dims = [
+            [MakespanOptimalCostSimulator, {"cost-bound-factor": taskdetails['q']}],
+            [UtilityValueSimulator, {'goals-utilities': _goals}]
+        ]
+
+        taskdetails['q'] = getkeyvalue(results_data, 'q')
+        taskdetails['k-plans'] = getkeyvalue(results_data, 'k')
+        
+        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), results_data['plans']))
+        bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
+
+        fixed_results_file = construct_results_file(taskdetails, task, selected_plans)
+        with open(os.path.join(outputdir, os.path.basename(taskfile)), 'w') as f:
+            json.dump(fixed_results_file, f, indent=4)
+
+
+
+
+        pass
+
 
 
 if __name__ == '__main__':
     args = arg_parser().parse_args()
+
+
+    ru_info_dumps = os.path.join(args.results, '..', 'del-me', 'resource-usage-dumps')
+    os.makedirs(ru_info_dumps, exist_ok=True)
+
+    tasks = parse_planning_tasks(args.planning_tasks, args.resources, ru_info_dumps, set(classical_instances))
+    results_files = read_results_files(args.results)
+
+    for idx, file in enumerate(results_files):
+        try:
+            print(f"Fixing results file {idx+1}/{len(results_files)}")
+            fix_results(file, tasks, args.outputdir)
+        except Exception as e:
+            print(f"Error processing file {file}: {e}")
+
 
     pass
