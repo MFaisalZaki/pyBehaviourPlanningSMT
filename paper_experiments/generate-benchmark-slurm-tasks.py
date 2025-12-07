@@ -5,7 +5,7 @@ import importlib.util
 from collections import defaultdict
 from copy import deepcopy
 
-from utilities import getkeyvalue, read_json_file
+from utilities import getkeyvalue
 
 
 classical_instances = [
