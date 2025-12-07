@@ -44,6 +44,12 @@ plt.rcParams.update({
     'mathtext.fontset': 'cm'
 })
 
+def rename_planner(planner_tag):
+    if 'symk' in planner_tag: return 'symk'
+    if 'fi-bc' in planner_tag: return 'fibc'
+    if 'fbi-smt-naive' in planner_tag: return 'fbismtnaive'
+    if 'fbi-smt' in planner_tag: return 'fbismt'
+    return planner_tag
 
 def arg_parser():
     parser = argparse.ArgumentParser(description="Generate SLURM tasks for running experiments.")
@@ -51,6 +57,23 @@ def arg_parser():
     parser.add_argument('--outputdir', type=str, required=True, help='Directory to store output files.')
     return parser
 
+def parse_filename(taskfilename):
+    task_type = next(filter(lambda t: t in taskfilename, ['classical', 'numerical', 'oversubscription']), None)
+    assert task_type is not None, f"Task type not found in task filename: {taskfilename}"
+    details = taskfilename.split(f'-{task_type}-')
+    q, k = details[0].split('-')[:2]
+
+    _planner_name = next(filter(lambda e: e in taskfilename, planner_name_map.keys()), None)
+    assert _planner_name is not None, f"Planner name not found in filename: {taskfilename}"
+    _domain_instance = taskfilename.replace(f'{q}-{k}-{task_type}-', '').replace('-results.json', '').replace(f'-{_planner_name}', '')
+
+    return {
+        'q': float(q),
+        'k': int(k),
+        'domain': _domain_instance[:_domain_instance.rfind('-')],
+        'instance': _domain_instance[_domain_instance.rfind('-')+1:],
+        'planner': rename_planner(_planner_name)
+    }
 
 def read_raw_results(resultsdir):
     ret_results = list()
@@ -71,7 +94,7 @@ def read_raw_results(resultsdir):
         domain  = getkeyvalue(data, 'domain')
         instance = getkeyvalue(data, 'problem')
         q        = getkeyvalue(data, 'q')
-        file_key_instance = extract_task_details(os.path.basename(file).replace(f'-{planner}-results.json',''))
+        file_key_instance = extract_task_details(os.path.basename(file))
         
         # if (q, k_value, file_key_instance[2], file_key_instance[3], planner) in [(1.0, 1000, 'None-sugar', '8', 'fbi-smt')]:
         #     pass
@@ -79,12 +102,24 @@ def read_raw_results(resultsdir):
         # if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0): 
         #     unsolved_tasks[q][k_value][planner].append((domain, instance))
         #     continue
+
+        if q is None:
+            _filename = parse_filename(os.path.basename(file))
+            q = _filename['q']
+            k_value = _filename['k']
+            domain = _filename['domain']
+            instance = _filename['instance']
+            planner = _filename['planner']
+            pass
+        else:
+            pass
+
         _processed_entry = {
             'q': q,
             'k': k_value,
             'domain': domain,
             'instance': instance,
-            'planner': planner,
+            'planner': rename_planner(planner),
             'plans': [] if plans is None else plans,
             'behaviour-count': getkeyvalue(data, 'behaviour-count'),
             'execution-time': execution_time,
@@ -110,7 +145,9 @@ def generate_summary_tables(raw_results):
     _coverage_values = Counter((e['q'], e['k'], e['planner']) for e in deepcopy(list(filter(lambda e: (len(e['plans']) >= e['k']), raw_results))))
 
     for q in sorted(q_values):
+        print(f"Processing q={q} ...")
         for k in sorted(k_values):
+            print(f"  Processing k={k} ...")
             # do these results per pairs.
             for i in range(2, len(planners_tags)+1):
                 for planners in combinations(planners_tags, i):
@@ -241,13 +278,8 @@ def remove_noisy_entries(raw_results):
     return cleaned_results
 
 def extract_task_details(taskfilename):
-    task_type = next(filter(lambda t: t in taskfilename, ['classical', 'numerical', 'oversubscription']), None)
-    assert task_type is not None, f"Task type not found in task filename: {taskfilename}"
-    details = taskfilename.split(f'-{task_type}-')
-    q, k = details[0].split('-')[:2]
-    domain_instance = details[1][details[1].rfind('-')+1:]
-    domain = details[1][:details[1].rfind('-')]
-    return (float(q), int(k), domain, domain_instance)
+    _details = parse_filename(taskfilename)
+    return (_details['q'], _details['k'], _details['domain'], _details['instance'])
 
 def analyse_limitsouts(slurm_dumps, raw_results):
     limits_outs = defaultdict(lambda: defaultdict(list))
@@ -350,16 +382,16 @@ def do_sanity_check(raw_results, results):
 
     instance_count_details = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 
-    for q in q_values:
-        for k in k_values:
-            for planner in planners_tags:
-                ran_instance_count = 0
-                ran_instance_count += len(results['planner-details'][q][k][planner])
-                ran_instance_count += results['timeout'][q][k][planner] if 'timeout' in results else 0
-                ran_instance_count += results['memoryout'][q][k][planner] if 'memoryout' in results else 0
-                ran_instance_count += results['errors'][planner][q][k] if 'errors' in results else 0
-                ran_instance_count += len(results['unsolved-tasks'][q][k][planner]) if 'unsolved-tasks' in results else 0
-                instance_count_details[q][k][planner] = ran_instance_count
+    # for q in q_values:
+    #     for k in k_values:
+    #         for planner in planners_tags:
+    #             ran_instance_count = 0
+    #             ran_instance_count += len(results['planner-details'][q][k][planner])
+    #             ran_instance_count += results['timeout'][q][k][planner] if 'timeout' in results else 0
+    #             ran_instance_count += results['memoryout'][q][k][planner] if 'memoryout' in results else 0
+    #             # ran_instance_count += results['errors'][planner][q][k] if 'errors' in results else 0
+    #             # ran_instance_count += len(results['unsolved-tasks'][q][k][planner]) if 'unsolved-tasks' in results else 0
+    #             instance_count_details[q][k][planner] = ran_instance_count
 
     return True
 
@@ -381,9 +413,12 @@ def main():
     outputdir = args.outputdir
 
     raw_results, unsolved_tasks = read_raw_results(resultsdir)
+    # first remove the unsolved tasks, we define a task is solved if it has at least k plans.
+    raw_results = list(filter(lambda e: len(e['plans']) >= e['k'], raw_results))
+    
     outs_results, timeout_entries = analyse_limitsouts(slurmdumps, deepcopy(raw_results))
     analyse_errors, error_entries = analyze_errors(errorsdir, set(e['planner'] for e in raw_results))
-    all_raw_results = remove_wrong_duplicates(raw_results + timeout_entries + error_entries)
+    all_raw_results = remove_wrong_duplicates(raw_results)
     raw_results = remove_noisy_entries(all_raw_results)
     # all_raw_results = raw_results + timeout_entries + error_entries
     
