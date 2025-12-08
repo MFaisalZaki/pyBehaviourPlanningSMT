@@ -319,6 +319,10 @@ def solve(taskname, args):
     if len(ret_details) == 0: return
     with open(outputpath, 'w') as f:
         json.dump(ret_details, f, indent=4)
+    
+    # delete created files.
+    os.remove(taskdetails['domainfile'])
+    os.remove(taskdetails['problemfile'])
 
 def main():
     args = arg_parser().parse_args()
