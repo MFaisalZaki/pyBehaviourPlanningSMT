@@ -179,14 +179,14 @@ def run_fi(taskdetails, dims, compilation_list):
             with open(os.path.join(found_plans, plan), 'r') as f:
                 plan = f.read()
                 if not plan in planlist: planlist.append(plan)
-
+        _planlist_str_cpy = planlist[:]
         task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
         planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), planlist))
         # For FI we are testing the goal predicate ordering
         dims = convert_smt_dims_to_simulator_dims(dims)
         bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
         results = construct_results_file(taskdetails, task, selected_plans)
-        return results | {'logs': logs}
+        return results | {'logs': logs} | {'all-plans': _planlist_str_cpy}
 
 def run_symk(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
