@@ -186,7 +186,15 @@ def run_fi(taskdetails, dims, compilation_list):
         dims = convert_smt_dims_to_simulator_dims(dims)
         bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
         results = construct_results_file(taskdetails, task, selected_plans)
-        return results | {'logs': logs} | {'all-plans': _planlist_str_cpy}
+
+        try:
+            # delete the tmp dir to avoid fucking up the file system.
+            import shutil
+            shutil.rmtree(tmpdir)
+        except Exception as e:
+            pass
+        finally:
+            return results | {'logs': logs} | {'all-plans': _planlist_str_cpy}
 
 def run_symk(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
@@ -203,8 +211,6 @@ def run_symk(taskdetails, dims, compilation_list):
             assert plan is not None, "No plan found by symk"
             cost_bound = int(len(plan.actions) * q)
 
-
-    
     _goals  = {}
     if taskdetails['planning-type'] == 'oversubscription':
         _goals  = add_utility_values(task) 
