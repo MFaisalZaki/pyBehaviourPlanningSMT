@@ -110,12 +110,18 @@ class BehaviourCountSimulator:
         return len(self.colleted_behaviours)
     
     def selected_plans(self, k):
+        _behaviours = defaultdict(list)
         _ret_plans = []
         for idx, p in enumerate(self.planslist):
             states    = self._simulate_(p)
             behaviour = self._extract_behaviour_(p, states)
             self.colleted_behaviours.add(behaviour)
             setattr(self.planslist[idx], 'behaviour', behaviour)
-            _ret_plans.append(self.planslist[idx])
-            if len(self.colleted_behaviours) >= k: break
+            _behaviours[behaviour].append(self.planslist[idx])
+        
+        while not all([len(v) == 0 for v in _behaviours.values()]):
+            for key in _behaviours.keys():
+                if len(_ret_plans) >= k: break
+                if len(_behaviours[key]) == 0: continue
+                _ret_plans.append(_behaviours[key].pop())
         return _ret_plans
