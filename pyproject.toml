@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "behaviour-planning"
+name = "behaviour-planning-smt"
 version = "0.1.0"
 description = "Behaviour planning over Domain Models using SMT solvers"
 authors = ["MFaisalZaki <mustafa.faisal.eng@gmail.com>"]
@@ -15,11 +15,8 @@ numpy = "1.26.4"
 pypmt = {git = "https://github.com/pyPMT/pyPMT.git@d44efb71746b3a91e7fb1926b4405bd14f9df33b"}
 up_pypmt = {git = "https://github.com/pyPMT/up-pypmt.git"}
 up-fast-downward = "^0.4.1"
-flloat = "^0.3.0"
 click = "^8.1.7"
 setuptools= "^74.1.1"
-tqdm = "^4.66.5"
-up-behaviour-planning = {git = "https://github.com/MFaisalZaki/up-behaviour-planning.git"}
 
 [build-system]
 requires = ["poetry-core"]
