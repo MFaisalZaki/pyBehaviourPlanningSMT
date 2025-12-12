@@ -197,7 +197,7 @@ def run_fi(taskdetails, dims, compilation_list):
             with open(os.path.join(generated_results, f"{taskdetails['filename'].replace('.json','')}_plans.json"), 'w') as f:
                 json.dump(_solved_task_details, f, indent=4)
             
-            planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))[:1500])) # cap the plans to 1500 to have results to compare with FBI. 
+            planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))[:1200])) # cap the plans to 1500 to have results to compare with FBI. 
             # For FI we are testing the goal predicate ordering
             dims = convert_smt_dims_to_simulator_dims(dims)
             bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
