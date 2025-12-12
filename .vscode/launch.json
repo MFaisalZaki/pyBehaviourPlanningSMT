@@ -47,7 +47,7 @@
                 "--taskfile",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-100-classical-2006-rovers-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-1-fbi-smt-naive.json",
-                "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-10-classical-2006-rovers-1-fi-bc.json",
+                "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-1-fi-bc.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/1.0-1000-numerical-None-zenotravel-1-fbi-smt-naive.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/2.0-5-numerical-None-tpp-metric-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt.json",
@@ -71,12 +71,13 @@
             "console": "integratedTerminal",
             "args": [
                 "--sandbox-dir",
-                "${workspaceFolder}/sandbox-benchmark-numerical",
-                // "${workspaceFolder}/sandbox-benchmark-classical",
+                // "${workspaceFolder}/sandbox-benchmark-numerical",
+                "${workspaceFolder}/sandbox-benchmark-classical",
                 // "${workspaceFolder}/sandbox-benchmark-oversubscription",
                 "--outputdir",
+                "${workspaceFolder}/sandbox-benchmark-classical/results-analysis"
                 // "${workspaceFolder}/sandbox-benchmark-oversubscription/results-analysis"
-                "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
+                // "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
             ],
             "justMyCode": false
         }

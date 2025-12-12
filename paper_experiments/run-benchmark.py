@@ -46,14 +46,8 @@ def add_utility_values(task):
     task.add_quality_metric(up.model.metrics.Oversubscription(goals, task.environment))
     return goals
 
-def construct_results_file(taskdetails, task, plans):
-    task_writer = PDDLWriter(task)
-    resultsfile = {
-        'plans': [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in plans],
-        'diversity-scores': {
-            'behaviour-count': len(set(p.behaviour for p in plans))
-        },
-        'info' : {
+def construct_task_details_info(taskdetails):
+    return {
             'domain' : os.path.basename(os.path.dirname(taskdetails['domainfile-name'])) + '/' + os.path.basename(taskdetails['domainfile-name']),
             'problem': os.path.basename(taskdetails['problemfile-name']),
             'planner': taskdetails['planner'],
@@ -61,7 +55,17 @@ def construct_results_file(taskdetails, task, plans):
             'planning-type': taskdetails['planning-type'],
             'k': taskdetails['k-plans'],
             'q': taskdetails['q']
+        }
+
+
+def construct_results_file(taskdetails, task, plans):
+    task_writer = PDDLWriter(task)
+    resultsfile = {
+        'plans': [task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour.replace("\n","")}' for p in plans],
+        'diversity-scores': {
+            'behaviour-count': len(set(p.behaviour for p in plans))
         },
+        'info' : construct_task_details_info(taskdetails),
     }
     return resultsfile
 
@@ -181,7 +185,18 @@ def run_fi(taskdetails, dims, compilation_list):
                 if not plan in planlist: planlist.append(plan)
         _planlist_str_cpy = planlist[:]
         task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
-        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), planlist))
+
+
+        generated_results = os.path.join(taskdetails['sandbox-dir'], 'fi-solved-instances')
+        os.makedirs(generated_results, exist_ok=True)
+        _solved_task_details = construct_task_details_info(taskdetails) | {'found-plans': planlist}
+        task_writer = PDDLWriter(task)
+        _solved_task_details |= {'domain': task_writer.get_domain(), 'problem': task_writer.get_problem()}
+        
+        with open(os.path.join(generated_results, f"{taskdetails['filename'].replace('.json','')}_plans.json"), 'w') as f:
+            json.dump(_solved_task_details, f, indent=4)
+        
+        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))[:1500])) # cap the plans to 1500 to have results to compare with FBI. 
         # For FI we are testing the goal predicate ordering
         dims = convert_smt_dims_to_simulator_dims(dims)
         bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
@@ -194,7 +209,7 @@ def run_fi(taskdetails, dims, compilation_list):
         except Exception as e:
             pass
         finally:
-            return results | {'logs': logs} | {'all-plans': _planlist_str_cpy}
+            return results | {'logs': logs}
 
 def run_symk(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
@@ -327,8 +342,8 @@ def solve(taskname, args):
         json.dump(ret_details, f, indent=4)
     
     # delete created files.
-    os.remove(taskdetails['domainfile'])
-    os.remove(taskdetails['problemfile'])
+    if os.path.exists(taskdetails['domainfile']): os.remove(taskdetails['domainfile'])
+    if os.path.exists(taskdetails['domainfile']): os.remove(taskdetails['problemfile'])
 
 def main():
     args = arg_parser().parse_args()

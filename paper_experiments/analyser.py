@@ -75,7 +75,7 @@ def parse_filename(taskfilename):
 
 def read_raw_results(resultsdir):
     ret_results = list()
-    unsolved_tasks = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    unsolved_tasks = list()
     for file in map(lambda x: os.path.join(resultsdir, x), os.listdir(resultsdir)):
         if not os.path.basename(file).endswith('.json'): continue
         with open(file, 'r') as f:
@@ -93,11 +93,6 @@ def read_raw_results(resultsdir):
         instance = getkeyvalue(data, 'problem')
         q        = getkeyvalue(data, 'q')
         file_key_instance = extract_task_details(os.path.basename(file))
-        
-        # if (q, k_value, file_key_instance[2], file_key_instance[3], planner) in [(1.0, 1000, 'None-sugar', '8', 'fbi-smt')]:
-        #     pass
-        
-        if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0):  continue
 
         _processed_entry = {
             'q': q,
@@ -110,7 +105,11 @@ def read_raw_results(resultsdir):
             'execution-time': execution_time,
             'file-instance-key': file_key_instance
         }
-        ret_results.append(_processed_entry)
+
+        if (plans is None) or (len(plans) < k_value) or (execution_time is None or execution_time == 0):  
+            unsolved_tasks.append(_processed_entry)
+        else:
+            ret_results.append(_processed_entry)
     return ret_results
 
 def generate_summary_tables(raw_results):
