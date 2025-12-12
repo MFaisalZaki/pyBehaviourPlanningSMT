@@ -12,7 +12,7 @@ fi_solved_instances = set(map(lambda f: f.replace('_plans.json','.json'), os.lis
 bc_counted = set(map(lambda f: f.replace('-results.json','.json'), os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/resultsdir')))
 
 
-rovers_4 = json.load(open(os.path.join(fi_solved_instances_dir, '2.0-100-classical-2002-rovers-4-fi-bc_plans.json')))
+rovers_4 = json.load(open(os.path.join(fi_solved_instances_dir, '2.0-100-classical-None-tsp-17-fi-bc_plans.json')))
 
 task = PDDLReader().parse_problem_string(rovers_4['domain'], rovers_4['problem'])
 

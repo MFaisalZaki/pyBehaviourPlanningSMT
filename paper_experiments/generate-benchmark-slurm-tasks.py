@@ -2,7 +2,7 @@ import os
 import argparse
 import json
 import importlib.util
-from collections import defaultdict
+from collections import defaultdict, Counter
 from copy import deepcopy
 
 from utilities import getkeyvalue
@@ -1117,7 +1117,7 @@ def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdu
 
     planning_problems = []
     covered_domains = set()
-
+    included_instances = set()
     for domain in planning_domains:
         for domainsroot, _dir, _files in os.walk(domain):
             domainapi = os.path.join(domainsroot, 'api.py')
@@ -1166,8 +1166,16 @@ def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdu
                 # Ignore if the domain or problem file does not exist.
                 if not (os.path.exists(planning_problem['domainfile']) and os.path.exists(planning_problem['problemfile'])): 
                     continue
+                if planning_problem in planning_problems:
+                    continue
+                if (planning_problem['domainname'], planning_problem['instanceno'], planning_problem['ipc_year']) in included_instances:
+                    continue
+
+                included_instances.add((planning_problem['domainname'], planning_problem['instanceno'], planning_problem['ipc_year']))
+
                 planning_problems.append(planning_problem)
                 covered_domains.add(os.path.basename(domainsroot))
+    
     return planning_problems
 
 def _get_resources_details(resourcesfiledir:str):
@@ -1252,10 +1260,10 @@ def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type)
         case _:
             q_list = []
 
-    for q in q_list:
-        for k in [5,10,100,1000]:
-            for planner in planners:
-                for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, selected_instances):
+    for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, selected_instances):
+        for q in q_list:
+            for k in [5,10,100,1000]:
+                for planner in planners:                
                     _tasks.append(task | { 'sandbox-dir' : sandboxdir, 'planning-type': planning_type, 'planner' : planner, 'q': q, 'k-plans': k, 'filename': f"{q}-{k}-{planning_type}-{task['ipc_year']}-{task['domainname']}-{task['instanceno']}-{planner}.json"})
     return _tasks
 

@@ -19,9 +19,9 @@
             "console": "integratedTerminal",
             "args": [
                 "--sandbox-dir",
-                // "${workspaceFolder}/sandbox-benchmark-classical/",
+                "${workspaceFolder}/sandbox-benchmark-classical/",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/",
-                "${workspaceFolder}/sandbox-benchmark-oversubscription",
+                // "${workspaceFolder}/sandbox-benchmark-oversubscription",
                 "--planning-tasks-dir",
                 "${workspaceFolder}/sandbox-benchmark/classical-domains",
                 // "${workspaceFolder}/sandbox-benchmark/numeric-domains",
@@ -29,9 +29,9 @@
                 "${workspaceFolder}/paper_experiments/data/classical-domains-ru-info",
                 // "${workspaceFolder}/paper_experiments/data/functions-domains-info",
                 "--planning-type",
-                // "classical"
+                "classical"
                 // "numerical"
-                "oversubscription"
+                // "oversubscription"
                 
 
             ],
@@ -47,7 +47,7 @@
                 "--taskfile",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-100-classical-2006-rovers-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-1-fbi-smt-naive.json",
-                "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-classical-2002-rovers-4-fi-bc.json",
+                "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-classical-2006-rovers-1-fi-bc.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/1.0-1000-numerical-None-zenotravel-1-fbi-smt-naive.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/2.0-5-numerical-None-tpp-metric-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt.json",
