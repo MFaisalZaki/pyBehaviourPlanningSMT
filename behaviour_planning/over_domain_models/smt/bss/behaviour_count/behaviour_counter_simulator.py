@@ -122,6 +122,7 @@ class BehaviourCountSimulator:
                 break
         
         while not all([len(v) == 0 for v in _behaviours.values()]):
+            if len(_ret_plans) >= k: break
             for key in _behaviours.keys():
                 if len(_ret_plans) >= k: break
                 if len(_behaviours[key]) == 0: continue
