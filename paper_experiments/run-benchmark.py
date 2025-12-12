@@ -349,7 +349,7 @@ def main():
     os.makedirs(args.outputdir, exist_ok=True)
     
     # # for dev only
-    solve(taskname, args)
+    # solve(taskname, args)
 
     try:
         solve(taskname, args)
