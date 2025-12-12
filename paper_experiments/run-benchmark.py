@@ -335,8 +335,10 @@ def solve(taskname, args):
         json.dump(ret_details, f, indent=4)
     
     # delete created files.
-    if os.path.exists(taskdetails['domainfile']): os.remove(taskdetails['domainfile'])
-    if os.path.exists(taskdetails['domainfile']): os.remove(taskdetails['problemfile'])
+    if os.path.exists(taskdetails['domainfile']):
+        # delete the dir 
+        import shutil
+        shutil.rmtree(os.path.dirname(taskdetails['domainfile']))
 
 def main():
     args = arg_parser().parse_args()
