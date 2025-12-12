@@ -192,7 +192,7 @@ def run_fi(taskdetails, dims, compilation_list):
             os.makedirs(generated_results, exist_ok=True)
             _solved_task_details = construct_task_details_info(taskdetails) | {'found-plans': planlist}
             task_writer = PDDLWriter(task)
-            _solved_task_details |= {'domain': task_writer.get_domain(), 'problem': task_writer.get_problem()}
+            _solved_task_details |= {'domain-str': task_writer.get_domain(), 'problem-str': task_writer.get_problem()}
             
             with open(os.path.join(generated_results, f"{taskdetails['filename'].replace('.json','')}_plans.json"), 'w') as f:
                 json.dump(_solved_task_details, f, indent=4)

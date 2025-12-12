@@ -1,5 +1,32 @@
+import os
+import json
 from collections import Counter
 from analyser import read_raw_results
+
+fi_solved_instances = []
+
+for f in os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances'):
+    with open(os.path.join('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances', f), 'r') as file:
+        fi_solved_instances.append(json.load(file))
+
+
+
+bc_counted = os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/resultsdir')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 results_dir = '/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-oversubscription/resultsdir'
 
 
