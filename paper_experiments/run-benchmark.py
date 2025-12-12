@@ -148,67 +148,60 @@ def run_fbi(taskdetails, dims, compilation_list):
 def run_fi(taskdetails, dims, compilation_list):
     tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
     os.makedirs(tmpdir, exist_ok=True)
-    cmd  = [sys.executable]
-    cmd += ["-m"]
-    cmd += ["forbiditerative.plan"]
-    cmd += ["--planner"]
-    cmd += ["extended_unordered_topq"]
-    cmd += ["--domain"]
-    cmd += [taskdetails['domainfile']]
-    cmd += ["--problem"]
-    cmd += [taskdetails['problemfile']]
-    cmd += ["--number-of-plans"]
-    cmd += [str(taskdetails['k-plans'])]
-    cmd += ["--quality-bound"]
-    cmd += [str(taskdetails['q'])]
-    cmd += ["--symmetries"]
-    cmd += ["--use-local-folder"]
-    cmd += ["--clean-local-folder"]
-    cmd += ["--suppress-planners-output"]
-    cmd += ["--overall-time-limit"]
-    cmd += ["1800"]
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:
+        cmd  = [sys.executable]
+        cmd += ["-m"]
+        cmd += ["forbiditerative.plan"]
+        cmd += ["--planner"]
+        cmd += ["extended_unordered_topq"]
+        cmd += ["--domain"]
+        cmd += [taskdetails['domainfile']]
+        cmd += ["--problem"]
+        cmd += [taskdetails['problemfile']]
+        cmd += ["--number-of-plans"]
+        cmd += [str(taskdetails['k-plans'])]
+        cmd += ["--quality-bound"]
+        cmd += [str(taskdetails['q'])]
+        cmd += ["--symmetries"]
+        cmd += ["--use-local-folder"]
+        cmd += ["--clean-local-folder"]
+        cmd += ["--suppress-planners-output"]
+        cmd += ["--overall-time-limit"]
+        cmd += ["1800"]
 
-    fienv = os.environ.copy()
-    fienv['FI_PLANNER_RUNS'] = tmpdir
-    logs = []
-    try:
-        output = subprocess.check_output(cmd, env=fienv, cwd=tmpdir)
-    except SubprocessError as e:
-        logs.append(str(e))
-    finally:    
-        planlist = []
-        found_plans = os.path.join(tmpdir, 'found_plans', 'done')
-        if not os.path.exists(found_plans): return {}
-        for plan in os.listdir(found_plans):
-            with open(os.path.join(found_plans, plan), 'r') as f:
-                plan = f.read()
-                if not plan in planlist: planlist.append(plan)
-        _planlist_str_cpy = planlist[:]
-        task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
-
-
-        generated_results = os.path.join(taskdetails['sandbox-dir'], 'fi-solved-instances')
-        os.makedirs(generated_results, exist_ok=True)
-        _solved_task_details = construct_task_details_info(taskdetails) | {'found-plans': planlist}
-        task_writer = PDDLWriter(task)
-        _solved_task_details |= {'domain': task_writer.get_domain(), 'problem': task_writer.get_problem()}
-        
-        with open(os.path.join(generated_results, f"{taskdetails['filename'].replace('.json','')}_plans.json"), 'w') as f:
-            json.dump(_solved_task_details, f, indent=4)
-        
-        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))[:1500])) # cap the plans to 1500 to have results to compare with FBI. 
-        # For FI we are testing the goal predicate ordering
-        dims = convert_smt_dims_to_simulator_dims(dims)
-        bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
-        results = construct_results_file(taskdetails, task, selected_plans)
-
+        fienv = os.environ.copy()
+        fienv['FI_PLANNER_RUNS'] = tmpdir
+        logs = []
         try:
-            # delete the tmp dir to avoid fucking up the file system.
-            import shutil
-            shutil.rmtree(tmpdir)
-        except Exception as e:
-            pass
-        finally:
+            output = subprocess.check_output(cmd, env=fienv, cwd=tmpdir)
+        except SubprocessError as e:
+            logs.append(str(e))
+        finally:    
+            planlist = []
+            found_plans = os.path.join(tmpdir, 'found_plans', 'done')
+            if not os.path.exists(found_plans): return {}
+            for plan in os.listdir(found_plans):
+                with open(os.path.join(found_plans, plan), 'r') as f:
+                    plan = f.read()
+                    if not plan in planlist: planlist.append(plan)
+            _planlist_str_cpy = planlist[:]
+            task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+
+
+            generated_results = os.path.join(taskdetails['sandbox-dir'], 'fi-solved-instances')
+            os.makedirs(generated_results, exist_ok=True)
+            _solved_task_details = construct_task_details_info(taskdetails) | {'found-plans': planlist}
+            task_writer = PDDLWriter(task)
+            _solved_task_details |= {'domain': task_writer.get_domain(), 'problem': task_writer.get_problem()}
+            
+            with open(os.path.join(generated_results, f"{taskdetails['filename'].replace('.json','')}_plans.json"), 'w') as f:
+                json.dump(_solved_task_details, f, indent=4)
+            
+            planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))[:1500])) # cap the plans to 1500 to have results to compare with FBI. 
+            # For FI we are testing the goal predicate ordering
+            dims = convert_smt_dims_to_simulator_dims(dims)
+            bspace, selected_plans = select_plans_using_bspace_simulator(taskdetails, task, dims, planlist)
+            results = construct_results_file(taskdetails, task, selected_plans)
             return results | {'logs': logs}
 
 def run_symk(taskdetails, dims, compilation_list):
@@ -361,6 +354,8 @@ def main():
     except Exception as e:
         with open(os.path.join(errorsdir, f'{taskname}_error.log'), 'a') as f:
             f.write(str(e) + '\n')
+    
+    pass
 
 if __name__ == "__main__":
     main()
