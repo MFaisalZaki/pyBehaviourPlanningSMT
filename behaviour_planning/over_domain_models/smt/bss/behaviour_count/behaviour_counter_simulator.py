@@ -118,6 +118,8 @@ class BehaviourCountSimulator:
             self.colleted_behaviours.add(behaviour)
             setattr(self.planslist[idx], 'behaviour', behaviour)
             _behaviours[behaviour].append(self.planslist[idx])
+            if len(self.colleted_behaviours) >= k:
+                break
         
         while not all([len(v) == 0 for v in _behaviours.values()]):
             for key in _behaviours.keys():

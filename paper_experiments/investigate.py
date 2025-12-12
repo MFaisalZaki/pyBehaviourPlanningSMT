@@ -3,15 +3,33 @@ import json
 from collections import Counter
 from analyser import read_raw_results
 
-fi_solved_instances = []
+from unified_planning.io import PDDLReader
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import GoalPredicatesOrderingSimulator, MakespanOptimalCostSimulator, ResourceCountSimulator, UtilityValueSimulator, FunctionsSimulator
 
-for f in os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances'):
-    with open(os.path.join('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances', f), 'r') as file:
-        fi_solved_instances.append(json.load(file))
+fi_solved_instances_dir = '/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances'
+
+fi_solved_instances = set(map(lambda f: f.replace('_plans.json','.json'), os.listdir(fi_solved_instances_dir)))
+bc_counted = set(map(lambda f: f.replace('-results.json','.json'), os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/resultsdir')))
 
 
+rovers_4 = json.load(open(os.path.join(fi_solved_instances_dir, '2.0-100-classical-2002-rovers-4-fi-bc_plans.json')))
 
-bc_counted = os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/resultsdir')
+task = PDDLReader().parse_problem_string(rovers_4['domain'], rovers_4['problem'])
+
+plans = list(map(lambda p: PDDLReader().parse_plan_string(task, p), rovers_4['found-plans'])) # cap the plans to 1500 to have results to compare with FBI. 
+
+from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
+
+dims = [
+    (GoalPredicatesOrderingSimulator, {}),
+    (ResourceCountSimulator,'/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-classical/resource-usage-dumps/rovers_4_resources.txt')
+]
+
+bspace = BehaviourCountSimulator(task, plans, dims)
+selected_plans = bspace.selected_plans(5)
+
+
+pass
 
 
 
