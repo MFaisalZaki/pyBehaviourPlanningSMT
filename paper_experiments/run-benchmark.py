@@ -185,9 +185,8 @@ def run_fi(taskdetails, dims, compilation_list):
                     plan = f.read()
                     if not plan in planlist: planlist.append(plan)
             _planlist_str_cpy = planlist[:]
+            planlist = set(planlist)
             task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
-
-
             generated_results = os.path.join(taskdetails['sandbox-dir'], 'fi-solved-instances')
             os.makedirs(generated_results, exist_ok=True)
             _solved_task_details = construct_task_details_info(taskdetails) | {'found-plans': planlist}
