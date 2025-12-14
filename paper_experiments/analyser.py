@@ -123,6 +123,7 @@ def generate_summary_tables(raw_results):
     _coverage_details = defaultdict(lambda: defaultdict(dict))
     _behaviour_count_details = defaultdict(lambda: defaultdict(dict))
     _execution_time_details = defaultdict(lambda: defaultdict(dict))
+    _execution_time_common_instances = defaultdict(lambda: defaultdict(dict))
     _planner_details = defaultdict(lambda: defaultdict(dict))
 
     # Remove entries that did not solve at least k plans.
@@ -187,12 +188,51 @@ def generate_summary_tables(raw_results):
                         'raw-values': {
                             planner: [e['behaviour-count'] for e in fitlered_planners_results[planner]] for planner in planners
                         }
-
                     }
+
+                    _execution_time_common_instances[q][k][planners_key] = {}
+                    _execution_time_common_instances[q][k][planners_key] |= {
+                        f'{planner}-mean': round(statistics.mean([e['execution-time'] for e in fitlered_planners_results[planner]]), 3)/60 if len([e['execution-time'] for e in fitlered_planners_results[planner]]) > 2 else -1 for planner in planners 
+                    }
+                    _execution_time_common_instances[q][k][planners_key] |= {
+                        f'{planner}-std': round(statistics.stdev([e['execution-time'] for e in fitlered_planners_results[planner]]), 3)/60 if len([e['execution-time'] for e in fitlered_planners_results[planner]]) > 2 else -1 for planner in planners
+                    }
+                    _execution_time_common_instances[q][k][planners_key] |= {
+                        f'{planner}-max': round(max([e['execution-time'] for e in fitlered_planners_results[planner]]), 3)/60 if len([e['execution-time'] for e in fitlered_planners_results[planner]]) > 2 else -1 for planner in planners
+                    }   
+                    _execution_time_common_instances[q][k][planners_key] |= {
+                        f'{planner}-min': round(min([e['execution-time'] for e in fitlered_planners_results[planner]]), 3)/60 if len([e['execution-time']  for e in fitlered_planners_results[planner]]) > 2 else -1 for planner in planners
+                    }
+            #         break
+            #     break
+            # break
+
+    # create the latex table in csv.
+    # comma_planners = ',' * (len(planners_tags))
+    # header =  ['$\\diversityfeatureslist$,$\\qualitybound$,$\\planscount$,' + 'Cov' + comma_planners + 'CI,' + 'Exec. Time (Common Instances)' + comma_planners + 'BDC' + comma_planners + 'p-value,Significant?']
+    
+    # for q in sorted(q_values):
+    #     for k in sorted(k_values):
+    #         for planners_key in _coverage_details[q][k].keys():
+    #             planners = sorted(planners_key.split('-PLANNER-'))
+    #             row = [',,,' + ','.join(planners) + ',' + ','.join(planners) + ',' + ','.join(planners) + ',' + ','.join(planners) + ',,']
+    #             row_entry = "\\{\\makecell{$\\diversityfeature{go}$,$\\diversityfeature{ru}$,$\\diversityfeature{cb}$}\\}"
+                
+
+    #             pass
+                
+    #             row_entries = [str(q), str(k), str(_coverage_details[q][k][planners_key][next(iter(_coverage_details[q][k][planners_key].keys()))])]
+    #             row_entries.extend(str(_coverage_details[q][k][planners_key][planner]) for planner in planners_key.split('-PLANNER-'))
+    #             row_entries.append('; '.join([f"{planner}: {round(_execution_time_common_instances[q][k][planners_key][f'{planner}-mean'], 1)}/{round(_execution_time_common_instances[q][k][planners_key][f'{planner}-std'], 1)}" for planner in planners_key.split('-PLANNER-')]))
+    #             row_entries.extend(str(_behaviour_count_details[q][k][planners_key][planner]) for planner in planners_key.split('-PLANNER-'))
+    #             row_entries.append(str(_behaviour_count_details[q][k][planners_key]['p-value']))
+    #             row_entries.append(str(_behaviour_count_details[q][k][planners_key]['is-significant']))
+    #             header.append(','.join(row_entries))
 
     return {
         'coverage': _coverage_details,
         'behaviour-count': _behaviour_count_details,
+        'execution-time-common-instances': _execution_time_common_instances,
         'execution-time': _execution_time_details,
         'planner-details': _planner_details
     }
@@ -220,7 +260,7 @@ def generate_plots(resutls, dumpdir):
             planners_groups[f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], d['behaviour-count']) for d in details] for planner, details in filterd_details.items()))
 
         sorted_order = sorted(planner_names)
-        fig, axes = plt.subplots(1, len(planners_groups), figsize=(20, 5), sharey=False)
+        fig, axes = plt.subplots(1, len(planners_groups), figsize=(20, 8), sharey=False)
         # Plot each group in a subplot
         for ax, (group_name, planners) in zip(axes, planners_groups.items()):
             df = pd.DataFrame(planners, columns=['Planner', 'Value'])

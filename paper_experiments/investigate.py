@@ -6,7 +6,20 @@ from analyser import read_raw_results
 from unified_planning.io import PDDLReader
 from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import GoalPredicatesOrderingSimulator, MakespanOptimalCostSimulator, ResourceCountSimulator, UtilityValueSimulator, FunctionsSimulator
 
-fi_solved_instances_dir = '/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/fi-solved-instances'
+fi_solved_instances_dir = '/Users/mustafafaisal/Developer/pyBehaviourPlanningSMT/sandbox-benchmark-classical/sandbox-fi/fi-solved-instances'
+bc_counted_dir = '/Users/mustafafaisal/Developer/pyBehaviourPlanningSMT/sandbox-benchmark-classical/sandbox-fi/resultsdir'
+
+
+# files to remove.
+# fi_solved_instances = set(map(lambda f: f.replace('_plans.json','.json'), os.listdir(fi_solved_instances_dir)))
+# bc_counted = set(map(lambda f: f.replace('-results.json','.json'), os.listdir(bc_counted_dir)))
+
+
+
+fi_solved_instances = [json.load(open(os.path.join(fi_solved_instances_dir, f))) for f in os.listdir(fi_solved_instances_dir)]
+bc_counted_stipped = [json.load(open(os.path.join(bc_counted_dir, f))) for f in os.listdir(bc_counted_dir)]
+
+
 
 fi_solved_instances = set(map(lambda f: f.replace('_plans.json','.json'), os.listdir(fi_solved_instances_dir)))
 bc_counted = set(map(lambda f: f.replace('-results.json','.json'), os.listdir('/home/ma342/developer/pyBehaviourPlanningSMT/sandbox-benchmark-dev/resultsdir')))
