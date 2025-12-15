@@ -1,8 +1,8 @@
 import z3
 import re
 import time 
+import up_symk
 import unified_planning.engines.results as UPResults
-
 
 from unified_planning.model.metrics import Oversubscription
 from unified_planning.shortcuts import OneshotPlanner, Compiler, CompilationKind
@@ -54,18 +54,12 @@ class BehaviourSpaceSMT:
         # This should solve the planning task using up.
         # if the planning task is oversubscription planning, then we need to remove the oversubscription metric.
         # to make sure that the planner solves get the formula len.
-        oversubscription_metrics = list(filter(lambda metric: isinstance(metric, Oversubscription), task.quality_metrics))
-        other_metrics            = list(filter(lambda metric: not isinstance(metric, Oversubscription), task.quality_metrics))
-        self._is_oversubscription = len(oversubscription_metrics) > 0
-        # remove the oversubscription metric from the task.
-        task.clear_quality_metrics()
-        for metric in other_metrics: task.add_quality_metric(metric)
+        is_oversubscription = self.task.kind.has_oversubscription() or self.task.kind.has_oversubscription_kind()
+        plannername = 'oversubscription[symk]' if is_oversubscription else 'symk'
         seedplan      = None
-        with OneshotPlanner() as planner:
+        with OneshotPlanner(name=plannername) as planner:
             result   = planner.solve(task)
             seedplan = result.plan if result.status in UPResults.POSITIVE_OUTCOMES else None
-        # add the oversubscription metric back to the task.
-        for metric in oversubscription_metrics: task.add_quality_metric(metric)
         return 0 if seedplan is None else len(seedplan.actions)
 
     def __encode_formula__(self, n):
@@ -102,7 +96,6 @@ class BehaviourSpaceSMT:
         for idx, (feat_name, addinfo) in enumerate(features):
             match feat_name:
                 case 'cb':
-                    # is_oversubscription = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0 
                     is_oversubscription = self.compiled_task.problem.kind.has_oversubscription() or self.compiled_task.problem.kind.has_oversubscription_kind()
                     ret_features.append((feat_name, addinfo | {'optimal-plan-length': self.optimal_plan_length, 'is-oversubscription': is_oversubscription}))
                 case _:

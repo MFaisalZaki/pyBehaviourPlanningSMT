@@ -4,9 +4,10 @@ import z3
 from collections import defaultdict, namedtuple
 
 from unified_planning.model.metrics import Oversubscription
+from behaviour_planning_smt.bss.features.base import DimensionConstructorSMT
 from behaviour_planning_smt.bss.features.base import DimensionConstructorSimulator
 
-class UtilityValueSMT(DimensionConstructorSimulator):
+class UtilityValueSMT(DimensionConstructorSMT):
     def __init__(self, task, additional_information):
         # extract the goal predicates utilties.
         oversubscription_metrics = list(filter(lambda metric: isinstance(metric, Oversubscription), task.encoder.task.quality_metrics))
@@ -15,23 +16,23 @@ class UtilityValueSMT(DimensionConstructorSimulator):
         assert len(oversubscription_metrics.goals) > 0, 'The oversubscription metric should have goals with utility value per goal.'
         
         # map up goal predicates to z3 variables.
-        additional_information['goals-utilities'] = []
+        additional_information['goals-utilities-map'] = []
         u_fn = namedtuple('u_fn', 'name timestep_vars utility')
         for up_goal_predicate, utility in oversubscription_metrics.goals.items():
             up_goal_predicate_name   = str(up_goal_predicate)
             goal_predicate_vars_list = [task.encoder._expr_to_z3(up_goal_predicate, t, task.encoder.ctx) for t in range(1, len(task.encoder))]
             utility_var_value        = z3.IntVal(utility, task.encoder.ctx)
-            additional_information['goals-utilities'].append(u_fn(up_goal_predicate_name, goal_predicate_vars_list, utility_var_value))
-        assert len(additional_information['goals-utilities']) == len(oversubscription_metrics.goals), 'The number of goals in the oversubscription metric should be equal to the number of goal predicates.'
+            additional_information['goals-utilities-map'].append(u_fn(up_goal_predicate_name, goal_predicate_vars_list, utility_var_value))
+        assert len(additional_information['goals-utilities-map']) == len(oversubscription_metrics.goals), 'The number of goals in the oversubscription metric should be equal to the number of goal predicates.'
 
         super().__init__('uv', task, additional_information)
             
     def __encode__(self, encoder):
         # create a utility variable to acculmate the utility values.
-        self.utility_var = z3.Int('utility', encoder.ctx)
-        self.var         = self.utility_var
+        self.utility_var  = z3.Int('utility', encoder.ctx)
+        self.var          = self.utility_var
         self.utility_vars = []
-        for predicate_name, timestep_vars, utility_value in self.addinfo['goals-utilities']:
+        for predicate_name, timestep_vars, utility_value in self.addinfo['goals-utilities-map']:
             utility_var = z3.Int(f'utility-({predicate_name})', encoder.ctx)
             self.utility_vars.append(utility_var)
             self.formula.append(utility_var == z3.If(timestep_vars[-1], z3.IntVal(utility_value, encoder.ctx), z3.IntVal(0, encoder.ctx)))

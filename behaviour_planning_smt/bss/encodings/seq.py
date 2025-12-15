@@ -44,7 +44,7 @@ def encode_n(self, **kwargs):
     horizon_planning = kwargs.get('horizon_planning', False)
     skip_actions = kwargs.get('skip_actions', False)
 
-    self.task_is_oversubscription_planning = len(list(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics))) > 0
+    self.task_is_oversubscription_planning = self.task.kind.has_oversubscription() or self.task.kind.has_oversubscription_kind()
 
     self.goal_states = []
     self.assertions = []
@@ -69,6 +69,14 @@ def encode_n(self, **kwargs):
         for k, v in formula.items():
             if v is not None: self.assertions.append(v)
     
+    # If the task is oversubscription then we need to extract the goal predicates ourselves.
+    if self.task_is_oversubscription_planning:
+        oversubscription_metrics = next(filter(lambda metric: isinstance(metric, Oversubscription), self.task.quality_metrics), None)
+        assert oversubscription_metrics is not None, 'The task is oversubscription planning but no oversubscription metric is found.'
+        self.goal_states.clear()
+        for t in range(1, formula_length+1):
+            self.goal_states.append(z3.And([self._expr_to_z3(goal_predicate, t) for goal_predicate in oversubscription_metrics.goals.keys()]))
+
     # define the horizon variable.
     self.horizon_var = z3.Int('horizon', ctx=self.ctx)
     self.assertions.append(self.horizon_var >  z3.IntVal(0, ctx=self.ctx))
