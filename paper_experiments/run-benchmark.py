@@ -48,10 +48,95 @@ def run_fbi(taskdetails, dims):
     _goals  = add_utility_values(task) if taskdetails['planning-type'] == 'oversubscription' else {}
     planner = ForbiddenBehaviorSMTPlanner(task, dims)
     plans   = planner.plan(k)
-    bspace, selected_plans = select_k_plans(task, k-1, dims, plans)
+    bspace, selected_plans = select_k_plans(task, k, dims, plans)
     results = construct_results_file(taskdetails, task, selected_plans)
     return results | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
+def run_fi(taskdetails, dims):
+    tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
+    os.makedirs(tmpdir, exist_ok=True)
+    cmd  = [sys.executable]
+    cmd += ["-m"]
+    cmd += ["forbiditerative.plan"]
+    cmd += ["--planner"]
+    cmd += ["extended_unordered_topq"]
+    cmd += ["--domain"]
+    cmd += [taskdetails['domainfile']]
+    cmd += ["--problem"]
+    cmd += [taskdetails['problemfile']]
+    cmd += ["--number-of-plans"]
+    cmd += [str(taskdetails['k-plans'])]
+    cmd += ["--quality-bound"]
+    cmd += [str(taskdetails['q'])]
+    cmd += ["--symmetries"]
+    cmd += ["--use-local-folder"]
+    cmd += ["--clean-local-folder"]
+    cmd += ["--suppress-planners-output"]
+    cmd += ["--overall-time-limit"]
+    cmd += ["1800"]
+
+    fienv = os.environ.copy()
+    fienv['FI_PLANNER_RUNS'] = tmpdir
+    logs = []
+    try:
+        output = subprocess.check_output(cmd, env=fienv, cwd=tmpdir)
+    except SubprocessError as e:
+        logs.append(str(e))
+    finally:    
+        planlist = []
+        found_plans = os.path.join(tmpdir, 'found_plans', 'done')
+        if not os.path.exists(found_plans): return {}
+        for plan in os.listdir(found_plans):
+            with open(os.path.join(found_plans, plan), 'r') as f:
+                plan = f.read()
+                if not plan in planlist: planlist.append(plan)
+        _planlist_str_cpy = set(planlist[:])
+        task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+        planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, p), list(set(planlist))))
+        # For FI we are testing the goal predicate ordering
+        bspace, selected_plans = select_k_plans(task, taskdetails['k-plans'], dims, planlist)
+        results = construct_results_file(taskdetails, task, selected_plans)
+        return results | {'logs': logs} | {'all-plans': list(_planlist_str_cpy)}
+
+
+def run_symk(taskdetails, dims):
+    tmpdir = os.path.join(taskdetails['sandbox-dir'], 'tmp', taskdetails['filename'].replace('.json',''))
+    os.makedirs(tmpdir, exist_ok=True)
+    task = PDDLReader().parse_problem(taskdetails['domainfile'], taskdetails['problemfile'])
+    k = taskdetails['k-plans']
+    q = taskdetails['q']
+
+    planlist = []
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:        
+        with OneshotPlanner(name="symk-opt") as planner:
+            result = planner.solve(task)
+            plan = result.plan
+            assert plan is not None, "No plan found by symk"
+            cost_bound = int(len(plan.actions) * q)
+
+    _goals  = {}
+    if taskdetails['planning-type'] == 'oversubscription':
+        _goals  = add_utility_values(task) 
+        task.goals.clear()
+
+    # now remove the hard goals then generate k plans with different utilities.
+    with tempfile.TemporaryDirectory(dir=tmpdir) as tmpdirname:        
+        with AnytimePlanner(name='symk', params={"symk_search_time_limit": "1800",
+                                                 "plan_cost_bound": 
+                                                 cost_bound, "number_of_plans": k}) as planner:
+            for i, result in enumerate(planner.get_solutions(task)):
+                if result.status == ResultsStatus.INTERMEDIATE:
+                    planlist.append(result.plan) if i < k else None
+    
+    planlist = list(filter(lambda p: len(p.actions) > 0, planlist))
+    # I hate this but let's rewrtite the plans to work with 
+    # planlist = list(map(lambda p: PDDLReader().parse_plan_string(task, PDDLWriter(task).get_plan(p)), planlist))
+    # Because of up environment shit.
+    _dims = list(filter(lambda e: e[0] != 'uv', dims))
+    _dims += [['uv', {"utility-goals": _goals}]]
+    bspace, selected_plans = select_k_plans(task, taskdetails['k-plans'], _dims, planlist)
+    results = construct_results_file(taskdetails, task, selected_plans)
+    return results | {'oversubscription-goals': {str(g): u for g, u in _goals.items()}}
 
 def solve(taskname, args):
 
@@ -130,7 +215,7 @@ def solve(taskname, args):
         case 'fi-bc':
             ret_details = run_fi(taskdetails, dims)
         case 'symk':
-            ret_details = run_symk(taskdetails, dims, compilation_list)
+            ret_details = run_symk(taskdetails, dims)
         case _:
             assert False, f"Unknown planning type {taskdetails['planning-type']}"
     end_time = time.time()
