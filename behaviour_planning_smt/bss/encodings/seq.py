@@ -13,7 +13,7 @@ from pypmt.encoders.basic import EncoderSequential, EncoderForall
 from pypmt.encoders.utilities import str_repr
 
 from behaviour_planning_smt.bss.encodings.utilities import flattern_expression
-from behaviour_planning_smt.bss.encodings.common    import actions_that_uses_resource, disable_actions_at_t, enabled_actions_vars, get_actions_vars, extend, convert, get_all_action_vars
+from behaviour_planning_smt.bss.encodings.common    import validate, actions_that_uses_resource, disable_actions_at_t, enabled_actions_vars, get_actions_vars, extend, convert, get_all_action_vars
 
 # append some extra functions to the EncoderSequential.
 def encode_n(self, **kwargs):
@@ -149,10 +149,20 @@ def extract_plan(self, model, horizon):
                 break
     setattr(plan, 'task', self.task)
     setattr(plan, 'z3_actions_vars', selected_actions_vars)
+    setattr(plan, 'isvalid', None)
+    setattr(plan, 'validation_fail_reason', None)
+    setattr(plan, 'task', self.task)
+    setattr(plan, 'cost_value', None)
+    setattr(plan, 'plan', plan)
+    setattr(plan, '_plan_str', None)
     return plan
 
 def encode_execution_semantics(self):
-    return z3.PbLe([(var, 1) for var in list(map(lambda x: x[0], self.up_actions_to_z3.values()))], 1)
+    return [z3.PbLe([(var, 1) for var in list(map(lambda x: x[0], self.up_actions_to_z3.values()))], 1)]
+
+
+setattr(SequentialPlan, 'validate', validate)
+setattr(SequentialPlan, '__len__', lambda self: len(self.plan.actions))
 
 # Update the encoder apis.
 # Store all goal states.

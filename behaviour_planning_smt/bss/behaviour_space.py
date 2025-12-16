@@ -2,10 +2,14 @@ import z3
 import re
 import time 
 import up_symk
+import up_pypmt
 import unified_planning.engines.results as UPResults
 
+from unified_planning.plans.sequential_plan import SequentialPlan
 from unified_planning.model.metrics import Oversubscription
 from unified_planning.shortcuts import OneshotPlanner, Compiler, CompilationKind
+
+from pypmt.compilers.delete_then_set_remover import DeleteThenSetRemover
 from pypmt.apis import initialize_fluents
 
 from itertools import chain
@@ -17,6 +21,7 @@ from behaviour_planning_smt.bss.features.goal_predicate_ordering import GoalPred
 from behaviour_planning_smt.bss.features.cost_bound_makespan_optimal import MakespanOptimalCostSMT
 from behaviour_planning_smt.bss.features.resources import ResourceCountSMT
 from behaviour_planning_smt.bss.features.utility_value import UtilityValueSMT
+from behaviour_planning_smt.bss.features.functions import FunctionsSMT
 
 encoder_map = {
     'seq':    EncoderSequential,
@@ -30,11 +35,17 @@ features_map = {
     'cb': MakespanOptimalCostSMT,
     'ru': ResourceCountSMT,
     'uv': UtilityValueSMT,
+    'fn': FunctionsSMT
 }
 
 class BehaviourSpaceSMT:
-    def __init__(self, task, f):
-        
+    def __init__(self, t, f):
+
+        # apply a set-del compiler to the task.
+        self.root_task = t
+        self.root_task_compiled = DeleteThenSetRemover().compile(self.root_task)
+        task = self.root_task_compiled.problem
+
         # This is required by pypmt to deal with numeric planning.
         initialize_fluents(task)
 
@@ -54,10 +65,38 @@ class BehaviourSpaceSMT:
         # This should solve the planning task using up.
         # if the planning task is oversubscription planning, then we need to remove the oversubscription metric.
         # to make sure that the planner solves get the formula len.
+        is_numeric_checker  = [self.task.kind.has_fluents_in_numeric_assignments()]
+        is_numeric_checker += [self.task.kind.has_numeric_fluents()]
+        is_numeric_checker += [self.task.kind.has_numbers()]
+        is_numeric_checker += [self.task.kind.has_simple_numeric_planning()]
+
         is_oversubscription = self.task.kind.has_oversubscription() or self.task.kind.has_oversubscription_kind()
-        plannername = 'oversubscription[symk]' if is_oversubscription else 'symk'
-        seedplan      = None
-        with OneshotPlanner(name=plannername) as planner:
+
+        plannername   = None
+        plannerparams = {}
+        if any([is_numeric_checker]) or is_oversubscription:
+            plannername    = 'oversubscription[symk]' if is_oversubscription else 'SMTPlanner'
+            if is_oversubscription:
+                plannerparams |= {"symk_search_time_limit": "900s"}
+            else:
+                compilation_list  = []
+                compilation_list += [["up_quantifiers_remover", CompilationKind.QUANTIFIERS_REMOVING]]
+                compilation_list += [["up_disjunctive_conditions_remover", CompilationKind.DISJUNCTIVE_CONDITIONS_REMOVING]]
+                compilation_list += [["up_grounder", CompilationKind.GROUNDING]]
+                plannerparams |= {
+                    "encoder": "EncoderForall", 
+                    "upper-bound": 1000,
+                    "search-strategy": "SMTSearch", 
+                    "configuration": "forall", 
+                    "run-validation": False,
+                    "compilationlist": list(map(lambda e: (e[0], str(e[1]).replace('CompilationKind.', '')), compilation_list))
+                }
+        else: 
+            plannername    = 'symk'
+            plannerparams |= {"symk_search_time_limit": "900s"}
+        
+        seedplan = None
+        with OneshotPlanner(name=plannername, params=plannerparams) as planner:
             result   = planner.solve(task)
             seedplan = result.plan if result.status in UPResults.POSITIVE_OUTCOMES else None
         return 0 if seedplan is None else len(seedplan.actions)
@@ -131,7 +170,8 @@ class BehaviourSpaceSMT:
             plan = self.encoder.extract_plan(model, model.evaluate(self.encoder.horizon_var, model_completion = True).as_long())
             # infer behaviour 
             behaviour_vars = {name : dim.expr(model) for name, dim in self.features.items()}
-            lifted_plan = plan.replace_action_instances(self.compiled_task.map_back_action_instance)
+            _intermediate_plan_lift = plan.replace_action_instances(self.compiled_task.map_back_action_instance)
+            lifted_plan = _intermediate_plan_lift.replace_action_instances(self.root_task_compiled.map_back_action_instance)
             setattr(lifted_plan, 'behaviour_expr', z3.And(list(filter(lambda e: e is not  None, behaviour_vars.values()))) if len(behaviour_vars) > 0 else None)
             setattr(lifted_plan, 'behaviour_attr', behaviour_vars if len(behaviour_vars) > 0 else None)
             setattr(lifted_plan, 'behaviour_str', re.sub(r' {2,}', '  ', str(lifted_plan.behaviour_expr)).replace('\n', ''))

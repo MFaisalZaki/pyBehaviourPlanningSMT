@@ -6,12 +6,14 @@ from behaviour_planning_smt.bss.features.goal_predicate_ordering import GoalPred
 from behaviour_planning_smt.bss.features.cost_bound_makespan_optimal import MakespanOptimalCostSimulator
 from behaviour_planning_smt.bss.features.resources import ResourceCountSimulator
 from behaviour_planning_smt.bss.features.utility_value import UtilityValueSimulator
+from behaviour_planning_smt.bss.features.functions import FunctionsSimulator
 
 features_map = {
     'go': GoalPredicatesOrderingSimulator,
     'cb': MakespanOptimalCostSimulator,
     'ru': ResourceCountSimulator,
     'uv': UtilityValueSimulator,
+    'fn': FunctionsSimulator
 }
 
 
@@ -52,7 +54,7 @@ class BehaviourDiversityCount:
             setattr(self.planslist[idx], 'behaviour', behaviour)
             _behaviours[behaviour].append(self.planslist[idx])
         
-        while not all([len(v) == 0 for v in _behaviours.values()]):
+        while not all([len(v) == 0 for v in _behaviours.values()]) and len(_ret_plans) < k:
             for key in _behaviours.keys():
                 if len(_ret_plans) >= k: break
                 if len(_behaviours[key]) == 0: continue

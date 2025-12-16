@@ -5,6 +5,7 @@ import z3
 from collections import defaultdict
 from lark import Lark, Transformer, v_args
 from behaviour_planning_smt.bss.features.base import DimensionConstructorSMT
+from behaviour_planning_smt.bss.features.base import DimensionConstructorSimulator
 
 class FunctionsSMT(DimensionConstructorSMT):
     def __init__(self, task, additional_information):
@@ -41,6 +42,30 @@ class FunctionsSMT(DimensionConstructorSMT):
             ret_value.append(predicate == predicate_value)
             self.var_domain[name].add(predicate_value.as_long())
         return z3.And(ret_value)
+
+class FunctionsSimulator(DimensionConstructorSimulator):
+    def __init__(self, task, addinfo):
+        super().__init__(task, 'function_value', parse_functions_file(addinfo))
+    
+    def plan_behaviour(self, plan):
+        
+        vars_values_over_time = defaultdict(list)
+        for t, state in enumerate(plan.states):
+            var_map = {str(e).replace('(','_').replace(')','').replace(' ','_').replace(',','') : e for e in state._values}
+            for func_name, func_info in self.addinfo.items():
+                if not func_info['name'] in var_map: continue
+                vars_values_over_time[func_info['name']].append(state.get_value(var_map[func_info['name']]))
+        
+        # map the values.
+        for _, fn in self.addinfo.items():
+            varname, minval, maxval, delta = fn['name'], fn['min'], fn['max'], fn['delta']
+            boxes = [(idx, i, i+delta) for idx, i in enumerate(range(minval, maxval-delta, delta))]
+            current_value = vars_values_over_time[varname][-1].constant_value()
+            vars_values_over_time[varname] = next(filter(lambda e: current_value > e[1] and current_value <= e[2], boxes), (-1))[0]
+        
+        val = ','.join([f'{k}:{str(v)}' for k,v in vars_values_over_time.items()])
+        self.domain.add(val)
+        return ','.join(val)
 
 class ResourceTransformer(Transformer):
     def resource_line(self, token):

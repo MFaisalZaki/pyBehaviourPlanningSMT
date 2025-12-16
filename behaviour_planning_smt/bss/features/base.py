@@ -31,3 +31,4 @@ class DimensionConstructorSimulator:
         self.task = task
         self.name = name
         self.addinfo = addinfo
+        self.domain = set()

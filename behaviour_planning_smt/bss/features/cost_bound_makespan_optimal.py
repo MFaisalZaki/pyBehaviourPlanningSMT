@@ -50,4 +50,5 @@ class MakespanOptimalCostSimulator(DimensionConstructorSimulator):
         super().__init__(task, 'cb', addinfo)
     
     def plan_behaviour(self, plan):
+        self.domain.add(len(plan.actions))
         return f'{self.name}:' + str(len(plan.actions))

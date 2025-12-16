@@ -55,7 +55,9 @@ class ResourceCountSimulator(DimensionConstructorSimulator):
         for action in plan.actions:
             for used_resource in set.intersection(set(map(str, action.actual_parameters)), set(self.addinfo['objects'])):
                 resource_usage[used_resource] += 1
-        return f'{self.name}:' + str(len(list(filter(lambda e: e[1] > 0, resource_usage.items()))))
+        val = len(list(filter(lambda e: e[1] > 0, resource_usage.items())))
+        self.domain.add(val)
+        return f'{self.name}:' + str(val)
 
 
 

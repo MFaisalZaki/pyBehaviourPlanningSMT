@@ -1,4 +1,35 @@
 import z3
+from unified_planning.shortcuts import PlanValidator
+
+
+def __len__(self):
+    """!
+    Returns the length of the plan.
+
+    @return the length of the actions in the plan.
+    """
+    return len(self.plan.actions)
+
+def validate(self):
+    """!
+    Validates plan (when one is found).
+
+    @param domain: path to PDDL domain file.
+    @param problem: path to PDDL problem file.
+
+    @return plan: string containing plan if plan found is valid, None otherwise.
+    """
+    if self.plan is None or self.task is None:
+        self.validation_fail_reason = "No plan or task provided." 
+        return None
+    if self.isvalid is not None: return self.isvalid
+    
+    with PlanValidator(name='sequential_plan_validator') as validator:
+        validationresult = validator.validate(self.task, self.plan)
+    self.validation_fail_reason = validationresult.reason
+    self.isvalid = validationresult.status.value == 1 if validationresult else False
+
+    return self.isvalid
 
 def flattern_list(list_of_lists):
     return sum((flattern_list(sub) if isinstance(sub, list) else [sub] for sub in list_of_lists), [])
