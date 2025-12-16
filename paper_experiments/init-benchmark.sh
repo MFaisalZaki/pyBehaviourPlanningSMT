@@ -5,7 +5,7 @@ else
     exit 1
 fi
 
-python3.12 -m venv $(pwd)/venv
+python3.13 -m venv $(pwd)/venv
 source $(pwd)/venv/bin/activate
 pip install setuptools
 pip install unified-planning

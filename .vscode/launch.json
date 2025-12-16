@@ -48,7 +48,7 @@
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-100-classical-2006-rovers-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-1-fbi-smt-naive.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-1-fi-bc.json",
-                // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/2.0-5-numerical-None-rover-1-fbi-smt-naive.json",
+                "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/2.0-5-numerical-None-rover-1-fbi-smt-naive.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/2.0-5-numerical-None-tpp-metric-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/1.0-5-2006-rovers-1-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-3-fi-bc.json",
@@ -56,7 +56,7 @@
                 // "${workspaceFolder}/sandbox-benchmark-classical/tasksdir/2.0-5-classical-2006-rovers-3-fbi-smt.json",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/tasksdir/1.0-5-numerical-None-rover-linear-1-fbi-smt.json",
 
-                "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/0.25-5-oversubscription-2000-schedule-5-symk.json",
+                // "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/0.25-5-oversubscription-2000-schedule-5-symk.json",
                 // "${workspaceFolder}/sandbox-benchmark-oversubscription/tasksdir/0.25-5-oversubscription-2006-rovers-1-fbi-smt.json",
                 "--outputdir",
                 "${workspaceFolder}/sandbox-benchmark-dev/resultsdir-2"
