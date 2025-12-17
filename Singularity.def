@@ -19,6 +19,8 @@ From: python:3.12-slim
         protobuf-compiler cmake \
         default-jre
     
+    apt-add-repository ppa:git-core/ppa && apt-get update && apt-get install -y git
+    
     cd /app
     pip install setuptools
     pip install unified-planning
