@@ -43,7 +43,9 @@ class BehaviourSpaceSMT:
 
         # apply a set-del compiler to the task.
         self.root_task = t
-        self.root_task_compiled = DeleteThenSetRemover().compile(self.root_task)
+        _compiler = DeleteThenSetRemover()
+        _compiler.skip_checks = True
+        self.root_task_compiled = _compiler.compile(self.root_task)
         task = self.root_task_compiled.problem
 
         # This is required by pypmt to deal with numeric planning.
