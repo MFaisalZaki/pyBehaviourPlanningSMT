@@ -74,7 +74,7 @@ JOB_FILES=(\$(ls ${ABS_PATH}/*.sh | sort))
 # Select the correct job file based on SLURM_ARRAY_TASK_ID
 JOB_FILE=\${JOB_FILES[\$((SLURM_ARRAY_TASK_ID-1))]}
 
-sbatch -p $SLURM_PART --qos=$SLURM_PART-limit-01 "\$JOB_FILE"
+sbatch -p $SLURM_PART "\$JOB_FILE"
 EOL
 
     echo "Generated Slurm script: $SLURM_SCRIPT"
