@@ -60,6 +60,7 @@ class FunctionsSimulator(DimensionConstructorSimulator):
         for _, fn in self.addinfo.items():
             varname, minval, maxval, delta = fn['name'], fn['min'], fn['max'], fn['delta']
             boxes = [(idx, i, i+delta) for idx, i in enumerate(range(minval, maxval-delta, delta))]
+            if len(vars_values_over_time[varname]) == 0: continue
             current_value = vars_values_over_time[varname][-1].constant_value()
             vars_values_over_time[varname] = next(filter(lambda e: current_value >= e[1] and current_value < e[2], boxes), boxes[-1])[0]
         
