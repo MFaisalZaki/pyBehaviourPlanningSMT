@@ -30,8 +30,13 @@ From: python:3.12-slim
     pip install seaborn
     pip install .
 
-    pip uninstall pypmt -y
-    pip install git+https://github.com/pyPMT/pyPMT.git@d44efb71746b3a91e7fb1926b4405bd14f9df33b
+    mkdir -p /app/sandbox-benchmark/classical-domains
+    git clone --recursive https://github.com/AI-Planning/classical-domains.git /app/sandbox-benchmark/classical-domains
+    git clone --recursive https://github.com/pyPMT/numeric-domains.git /app/sandbox-benchmark/numeric-domains
+
+    python /app/paper_experiments/generate-benchmark-slurm-tasks.py --planning-type classical        --sandbox-dir /app/sandbox-benchmark-classical        --planning-tasks-dir /app/sandbox-benchmark/classical-domains/classical --resources-dir /app/paper_experiments/data/classical-domains-ru-info
+    python /app/paper_experiments/generate-benchmark-slurm-tasks.py --planning-type oversubscription --sandbox-dir /app/sandbox-benchmark-oversubscription --planning-tasks-dir /app/sandbox-benchmark/classical-domains/classical
+    python /app/paper_experiments/generate-benchmark-slurm-tasks.py --planning-type numerical        --sandbox-dir /app/sandbox-benchmark-numerical        --planning-tasks-dir /app/sandbox-benchmark/numeric-domains             --resources-dir /app/paper_experiments/data/functions-domains-info
 
 %runscript
     exec python /app/paper_experiments/run-benchmark.py "$@"

@@ -1118,7 +1118,7 @@ def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdu
 
     planning_problems = []
     covered_domains = set()
-
+    included_instances = set()
     for domain in planning_domains:
         for domainsroot, _dir, _files in os.walk(domain):
             domainapi = os.path.join(domainsroot, 'api.py')
@@ -1167,8 +1167,16 @@ def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdu
                 # Ignore if the domain or problem file does not exist.
                 if not (os.path.exists(planning_problem['domainfile']) and os.path.exists(planning_problem['problemfile'])): 
                     continue
+                if planning_problem in planning_problems:
+                    continue
+                if (planning_problem['domainname'], planning_problem['instanceno'], planning_problem['ipc_year']) in included_instances:
+                    continue
+
+                included_instances.add((planning_problem['domainname'], planning_problem['instanceno'], planning_problem['ipc_year']))
+
                 planning_problems.append(planning_problem)
                 covered_domains.add(os.path.basename(domainsroot))
+    
     return planning_problems
 
 def _get_resources_details(resourcesfiledir:str):
@@ -1214,6 +1222,9 @@ def wrap_tasks_in_slurm_scripts(sandbox, tasks, slurmdumpdir, timelimit='00:30:0
     
     resultsdir = os.path.join('/app', sandboxdir, 'resultsdir')
     os.makedirs(resultsdir, exist_ok=True)
+
+    image_path = os.path.join(sandbox, '..', 'planning-benchmarks.sif')
+
     slurm_scripts = []
     for task in tasks:
         taskfile = os.path.join(tasksdir, f"{task['filename']}")
@@ -1223,7 +1234,7 @@ def wrap_tasks_in_slurm_scripts(sandbox, tasks, slurmdumpdir, timelimit='00:30:0
         os.makedirs(rundir, exist_ok=True)
 
         runcmd = f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}"
-        cmd = [f"apptainer run --cleanenv --bind {sandbox}:{sandboxdir} planning-benchmarks.sif {runcmd}"]
+        cmd = [f"apptainer run --cleanenv --bind {sandbox}:{sandboxdir} {image_path} {runcmd}"]
         slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit_map[task['planner']], memorylimit, slurmdumpdir)
         slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
     return slurm_scripts
