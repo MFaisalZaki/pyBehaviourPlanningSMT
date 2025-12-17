@@ -31,4 +31,4 @@ python $(pwd)/paper_experiments/generate-benchmark-slurm-tasks.py --use-conda --
 sh $(pwd)/paper_experiments/split-slurm.sh $(pwd)/sandbox-benchmark-classical/slurm-dumps $(pwd)/sandbox-benchmark-classical/splitted-slurm-dumps classical $slurmpartname
 sh $(pwd)/paper_experiments/split-slurm.sh $(pwd)/sandbox-benchmark-oversubscription/slurm-dumps $(pwd)/sandbox-benchmark-oversubscription/splitted-slurm-dumps osp $slurmpartname
 sh $(pwd)/paper_experiments/split-slurm.sh $(pwd)/sandbox-benchmark-numerical/slurm-dumps $(pwd)/sandbox-benchmark-numerical/splitted-slurm-dumps numeric $slurmpartname
-deactivate
+conda deactivate
