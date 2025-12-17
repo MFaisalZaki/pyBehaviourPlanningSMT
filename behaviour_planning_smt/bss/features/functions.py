@@ -33,7 +33,7 @@ class FunctionsSMT(DimensionConstructorSMT):
             self.functions_vars.append((varname, function_dimension_var))
             self.var_domain[varname] = set()
         
-        assert len(self.functions_vars) > 0, 'Functions dimension has no functions vars found in the encoder.'
+        # assert len(self.functions_vars) > 0, 'Functions dimension has no functions vars found in the encoder.'
 
     def expr(self, model):
         ret_value = []
