@@ -1209,9 +1209,11 @@ def arg_parser():
     parser.add_argument('--planning-tasks-dir', type=str, required=True, help='Directory containing planning tasks.')
     parser.add_argument('--resources-dir', type=str, required=False, default='', help='Directory containing resource files for tasks.')
     parser.add_argument('--planning-type', type=str, required=False, default='classical', help='Type of planning tasks to consider (classical/oversubscription/numerical).')
+    parser.add_argument('--use-conda', action='store_true', help='Whether to use conda environment activation in the SLURM scripts.')
+    parser.add_argument('--conda-name', type=str, default='behaviour_planning_smt', help='Name of the conda environment to activate if --use-conda is set.')
     return parser
 
-def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memorylimit='16G'):
+def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, conda_name='behaviour_planning_smt', use_conda=False, timelimit='00:30:00', memorylimit='16G'):
     venv = os.path.join(os.path.dirname(slurmdumpdir), '..', 'venv')
     scriptfile = os.path.join(os.path.dirname(slurmdumpdir), '..', 'paper_experiments', 'run-benchmark.py')
     tasksdir = os.path.join(os.path.dirname(slurmdumpdir), 'tasksdir')
@@ -1228,10 +1230,17 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memor
         rundir = os.path.join(os.path.dirname(slurmdumpdir), 'rundir', task['filename'].replace('.json',''))
         os.makedirs(rundir, exist_ok=True)
 
-        cmd = [f"source {venv}/bin/activate"]
-        cmd.append(f"cd {rundir}")
-        cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
-        cmd.append(f"deactivate")
+        cmd = []
+        if use_conda:
+            cmd += [f'conda activate {conda_name}']
+            cmd.append(f"mkdir -p {rundir} && cd {rundir}")
+            cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
+            cmd.append(f"conda deactivate")
+        else:
+            cmd = [f"source {venv}/bin/activate"]
+            cmd.append(f"mkdir -p {rundir} && cd {rundir}")
+            cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
+            cmd.append(f"deactivate")
         cmd = " && ".join(cmd)
         slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit_map[task['planner']], memorylimit, slurmdumpdir)
         slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
@@ -1280,7 +1289,7 @@ def main():
 
     print(f"Generating SLURM scripts for planning tasks in {planning_tasks_dir} with resources from {resources_dir} and planning type {planning_type}...")
 
-    slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir)
+    slurm_scripts = wrap_tasks_in_slurm_scripts(generate_tasks(planning_tasks_dir, resources_dir, sandbox_dir, planning_type), slurmdumpdir,  conda_name=args.conda_name, use_conda=args.use_conda)
 
     for idx, (taskname, script) in enumerate(slurm_scripts):
         with open(os.path.join(slurmdumpdir, f"{idx}_{taskname}.sh"), 'w') as f:

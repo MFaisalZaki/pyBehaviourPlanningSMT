@@ -31,7 +31,8 @@
                 "--planning-type",
                 // "classical"
                 // "numerical"
-                "oversubscription"
+                "oversubscription",
+                "--use-conda"
                 
 
             ],
