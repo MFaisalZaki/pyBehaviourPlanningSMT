@@ -1232,7 +1232,8 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, conda_name='behaviour_plann
 
         cmd = []
         if use_conda:
-            cmd += [f'conda activate {conda_name}']
+            cmd.append(f'conda init')
+            cmd.append(f'conda activate {conda_name}')
             cmd.append(f"mkdir -p {rundir} && cd {rundir}")
             cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
             cmd.append(f"conda deactivate")
