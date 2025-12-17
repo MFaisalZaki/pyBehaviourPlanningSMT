@@ -1,6 +1,7 @@
 from collections import defaultdict
 from unified_planning.shortcuts import SequentialSimulator
 
+from pypmt.apis import initialize_fluents
 
 from behaviour_planning_smt.bss.features.goal_predicate_ordering import GoalPredicatesOrderingSimulator
 from behaviour_planning_smt.bss.features.cost_bound_makespan_optimal import MakespanOptimalCostSimulator
@@ -26,6 +27,7 @@ class BehaviourDiversityCount:
 
     def _simulate_(self, plan):
         states = []
+        initialize_fluents(self.task)
         with SequentialSimulator(problem=self.task) as simulator:
             initial_state = simulator.get_initial_state()
             current_state = initial_state
