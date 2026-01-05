@@ -1664,7 +1664,7 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memor
         cmd = " && ".join(cmd)
         slurm_script = wrap_cmd(task['filename'].replace('.json',''), cmd, timelimit_map[task['planner']], memorylimit, slurmdumpdir)
         slurm_scripts.append((task['filename'].replace('.json',''), slurm_script))
-    return slurm_scripts
+    return set(slurm_scripts)
 
 def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type):
     _tasks = []
