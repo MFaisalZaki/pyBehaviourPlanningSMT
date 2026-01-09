@@ -1902,13 +1902,15 @@ def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type)
         case 'classical':
             q_list   = [1.0, 2.0]
             planners = ['fbi-smt', 'fbi-smt-naive', 'fi-bc']
-            selected_instances = set(classical_instances)
-            selected_instances = set(classical_instances_2)
+            # selected_instances = set(classical_instances)
+            # selected_instances = set(classical_instances_2)
+            selected_instances = set.union(set(classical_instances), set(classical_instances_2))
         case 'oversubscription':
             q_list = [0.25, 0.5, 0.75, 1.0]
             planners = ['fbi-smt', 'fbi-smt-naive', 'symk']
-            selected_instances = set(classical_instances)
-            selected_instances = set(classical_instances_2)
+            # selected_instances = set(classical_instances)
+            # selected_instances = set(classical_instances_2)
+            selected_instances = set.union(set(classical_instances), set(classical_instances))
         case 'numerical':
             q_list = [1.0, 2.0]
             planners = ['fbi-smt', 'fbi-smt-naive']
