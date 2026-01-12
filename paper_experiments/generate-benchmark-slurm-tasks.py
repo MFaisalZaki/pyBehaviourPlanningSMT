@@ -1882,6 +1882,7 @@ def wrap_tasks_in_slurm_scripts(tasks, slurmdumpdir, timelimit='00:30:00', memor
         os.makedirs(rundir, exist_ok=True)
 
         cmd = [f"source {venv}/bin/activate"]
+        cmd.append(f"mkdir -p {rundir}")
         cmd.append(f"cd {rundir}")
         cmd.append(f"python {scriptfile} --taskfile {taskfile} --outputdir {resultsdir}")
         cmd.append(f"deactivate")
