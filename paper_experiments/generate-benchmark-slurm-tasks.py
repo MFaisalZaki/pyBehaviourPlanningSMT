@@ -1761,6 +1761,33 @@ def wrap_cmd(taskname, cmd, timelimt, memorylimit, slurmdumpdir):
 {cmd}
 """
 
+
+def dump_tasks_summary(planningtasksinfo, dumpfiledir):
+    from collections import defaultdict
+    instances_details = list(map(lambda e: e.replace('(', '').replace(')', '').replace(' ', '').split(','), planningtasksinfo))
+
+    instances_by_domain = defaultdict(lambda: defaultdict(list))
+    for year, domain, instance_id in instances_details:
+        instances_by_domain[year][domain].append(instance_id)
+
+    year_keys = sorted(instances_by_domain.keys(), key=lambda x: (x is None, x))
+    domain_keys = sorted({domain for year in instances_by_domain for domain in instances_by_domain[year]})
+
+    file_header = ['Year, Domain, NumInstances, InstanceIDs']
+
+    for year in year_keys:
+        for domain in domain_keys:
+            instance_ids = instances_by_domain[year].get(domain, [])
+            num_instances = len(instance_ids)
+            if num_instances > 0:
+                instance_ids_str = ' '.join(instance_ids)
+                file_header.append(f"{year}, {domain}, {num_instances}, {instance_ids_str}")
+
+    with open(dumpfiledir, 'w') as f:
+        for line in file_header:
+            f.write(line + '\n')
+
+
 def parse_planning_tasks(planningtasksdir:str, resourcesfiledir:str, resourcesdumpdir:str, selected_instances:set):
     # First collect the resoruces information requried.
     resources = _get_resources_details(resourcesfiledir)
@@ -1903,26 +1930,31 @@ def generate_tasks(planning_tasks_dir, resources_dir, sandboxdir, planning_type)
         case 'classical':
             q_list   = [1.0, 2.0]
             planners = ['fbi-smt', 'fbi-smt-naive', 'fi-bc']
-            # selected_instances = set(classical_instances)
+            selected_instances = set(classical_instances)
             # selected_instances = set(classical_instances_2)
-            selected_instances = set.union(set(classical_instances), set(classical_instances_2))
+            # selected_instances = set.union(set(classical_instances), set(classical_instances_2))
         case 'oversubscription':
             q_list = [0.25, 0.5, 0.75, 1.0]
             planners = ['fbi-smt', 'fbi-smt-naive', 'symk']
-            # selected_instances = set(classical_instances)
+            selected_instances = set(classical_instances)
             # selected_instances = set(classical_instances_2)
-            selected_instances = set.union(set(classical_instances), set(classical_instances))
+            # selected_instances = set.union(set(classical_instances), set(classical_instances))
         case 'numerical':
             q_list = [1.0, 2.0]
             planners = ['fbi-smt', 'fbi-smt-naive']
         case _:
             q_list = []
 
+    taskinfo = set()
     for task in parse_planning_tasks(planning_tasks_dir, resources_dir, ru_info_dumps, selected_instances):
         for q in q_list:
             for k in [5,10,100,1000]:
                 for planner in planners:                
                     _tasks.append(task | { 'sandbox-dir' : sandboxdir, 'planning-type': planning_type, 'planner' : planner, 'q': q, 'k-plans': k, 'filename': f"{q}-{k}-{planning_type}-{task['ipc_year']}-{task['domainname']}-{task['instanceno']}-{planner}.json"})
+                    taskinfo.add(f"({task['ipc_year']}, {task['domainname']}, {task['instanceno']})")
+    
+    dump_tasks_summary(taskinfo, os.path.join(sandboxdir, f'{planning_type}-tasks-summary.csv'))
+    
     return _tasks
 
 def main():
