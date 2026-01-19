@@ -257,13 +257,13 @@ def generate_plots(resutls, dumpdir):
             for planner in k_values.keys():
                 filterd_details[planner] = list(filter(lambda x: f"{x['domain']}-{x['instance']}" in common_instances_per_planner, k_values[planner]))
 
-            planners_groups[f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], d['behaviour-count']) for d in details] for planner, details in filterd_details.items()))
+            planners_groups[f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], f"{d['domain']}-{d['instance']}", d['behaviour-count']) for d in details] for planner, details in filterd_details.items()))
 
         sorted_order = sorted(planner_names)
         fig, axes = plt.subplots(1, len(planners_groups), figsize=(20, 8), sharey=False)
         # Plot each group in a subplot
         for ax, (group_name, planners) in zip(axes, planners_groups.items()):
-            df = pd.DataFrame(planners, columns=['Planner', 'Value'])
+            df = pd.DataFrame(planners, columns=['Planner', 'Instance', 'Value'])
             _sorted_order = [p for p in sorted_order if p in set(e[0] for e in planners)]
             sns.violinplot(x='Planner', y='Value', data=df, ax=ax, palette=color_map, order=_sorted_order, cut=0, inner='box')
             ax.set_title(group_name, fontsize=25)
@@ -281,6 +281,59 @@ def generate_plots(resutls, dumpdir):
 
         plt.tight_layout()
         plt.savefig(os.path.join(dumpdir, f'violin-bdc-{q}-{k}.pdf'), bbox_inches='tight', dpi=600)
+        plt.clf()
+        
+        # for planner1, planner2 in combinations(set(e[0] for e in planners), 2):
+        #     fig, axes = plt.subplots(1, len(planners_groups), figsize=(12, 12), sharey=False)
+        #     for ax, (group_name, planners) in zip(axes, planners_groups.items()):
+        #         df = pd.DataFrame(planners, columns=['Planner', 'Instance', 'Value'])
+        #         _sorted_order = [p for p in sorted_order if p in set(e[0] for e in planners)]
+        #         # get the values for each planner
+        #         values1 = df[df['Planner'] == planner1]
+        #         values2 = df[df['Planner'] == planner2]
+        #         # get the common instances. 
+        #         common_instances = sorted(set(values1['Instance']).intersection(set(values2['Instance'])))
+        #         domain_points = defaultdict(list)
+        #         for instance in common_instances:
+        #             domain_points[os.path.dirname(instance)].append( (values1[values1['Instance'] == instance]['Value'].values[0], values2[values2['Instance'] == instance]['Value'].values[0]) )
+            
+        #         markers = ['o', 's', '^', 'D', 'v', 'P', '*', 'X', '<', '>']
+        #         cmap = plt.get_cmap('Set1')  # or 'tab20', 'Set1', etc.
+        #         domain_color_map = {p: cmap(i % cmap.N) for i, p in enumerate(domain_points.keys())}
+        #         for i, (domain, points) in enumerate(domain_points.items()):
+        #             if len(points) == 0: continue
+        #             x, y = zip(*points)
+        #             plt.scatter(x, y, label=domain, color=domain_color_map[domain], marker=markers[i % len(markers)], alpha=0.7, edgecolors='w', s=100)
+        #         ax.set_title(group_name, fontsize=25)
+        #         ax.set_xlabel('')
+        #         ax.grid(True)
+        #         # Adjust x-axis labels to prevent overlapping
+        #         ax.tick_params(axis='x', labelsize=20)
+        #         ax.tick_params(axis='y', labelsize=25)
+        #         plt.setp(ax.get_xticklabels(), ha='center')
+        #         # ax.set_xlabel('')
+        #         # # add y=x line
+        #         # max_val = max(df['Value'].max(), df['Value'].max())
+        #         # plt.plot([0, max_val], [0, max_val], 'k--', lw=2)
+        #         # plt.title(f'{planner1} vs {planner2} BDC', fontsize=25)
+        #         # # okay there is a big gap between x/y ticks. how can I reduce this.
+                
+                
+        #         # # ax.grid(True)
+        #         # # Adjust x-axis labels to prevent overlapping
+        #         # ax.tick_params(axis='x', labelsize=20)
+        #         # ax.tick_params(axis='y', labelsize=25)
+        #         # plt.xlabel(f'{planner1} BDC')
+        #         # plt.ylabel(f'{planner2} BDC')
+        #         # plt.setp(ax.get_xticklabels(), ha='center')
+        #         # plt.legend(title='Domains', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=12)
+        #         # plt.savefig(os.path.join(dumpdir, f'scatter-plot-{q}-{k}-{planner1}-vs-{planner2}.pdf'), dpi=600, bbox_inches='tight')
+        #         # plt.clf()
+        #         pass
+        #     plt.tight_layout()
+        #     plt.savefig(os.path.join(dumpdir, f'scatter-plot-{q}-{k}-{planner1}-{planner2}.pdf'), dpi=600, bbox_inches='tight')
+        #     plt.clf()
+        pass
 
 def remove_noisy_entries(raw_results):
     # So a noisy entry is an entry that did not appear in pervious k values for the same q, domain, instance, and planner.

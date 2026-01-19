@@ -72,11 +72,11 @@
             "args": [
                 "--sandbox-dir",
                 // "${workspaceFolder}/sandbox-benchmark-numerical",
-                "${workspaceFolder}/sandbox-classical-batch-2",
+                "${workspaceFolder}/sandbox-benchmark-classical",
                 // "${workspaceFolder}/sandbox-benchmark-oversubscription",
                 "--outputdir",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
-                "${workspaceFolder}/sandbox-classical-batch-2/results-analysis-new"
+                "${workspaceFolder}/sandbox-benchmark-classical/results-analysis-new"
                 // "${workspaceFolder}/sandbox-benchmark-oversubscription/results-analysis"
                 
             ],
