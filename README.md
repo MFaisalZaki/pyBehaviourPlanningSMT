@@ -6,11 +6,12 @@ Installation is easy; just run `python -m venv venv && source venv/bin/activate 
 
 # How to use
 ```
-import unified_planning as up
+import os
+from unified_planning.io import PDDLReader, PDDLWriter
 from behaviour_planning_smt.fbi.planner import ForbiddenBehaviorSMTPlanner
 
-domainfile  = 'PATH-TO-DOMAIN.PDDL'
-problemfile = 'PATH-TO-PROBLEM.PDDL'
+domainfile  = '/home/ma342/developer/tmp/pyBehaviourPlanningSMT/sandbox-benchmark/classical-domains/classical/rovers/domain.pddl'
+problemfile = '/home/ma342/developer/tmp/pyBehaviourPlanningSMT/sandbox-benchmark/classical-domains/classical/rovers/p02.pddl'
 
 task = PDDLReader().parse_problem(domainfile, problemfile)
 k = 5 # set the number of required plans
@@ -33,6 +34,14 @@ dims += [['cb', {"quality-bound": q}]] # add the cost bound feature
 # 2. Run the planner.
 planner = ForbiddenBehaviorSMTPlanner(task, dims)
 plans   = planner.plan(k)
+
+# 3. Dump the plans.
+plans_dir = os.path.join(os.path.dirname(__file__), "plans")
+os.makedirs(plans_dir, exist_ok=True)
+task_writer = PDDLWriter(task)
+for i, plan_str in  enumerate([task_writer.get_plan(p) + f';{len(p.actions)} cost (unit)' + f'\n;behaviour: {p.behaviour_str.replace("\n","")}' for p in plans]):
+    with open(os.path.join(plans_dir, f"plan_{i+1}.sas"), "w") as f:
+        f.writelines(plan_str)
 ```
 
 # Citation
