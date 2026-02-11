@@ -2,8 +2,7 @@
 Implementation for the `Behaviour Planning: A Toolbox for Diverse Planning` paper.
 
 # Installation
-Installation is easy; just run `python -m venv venv && source venv/bin/activate && pip install .`
-Afterwards, install the UP wrapper:`pip install git+https://github.com/MFaisalZaki/up-behaviour-planning.git `
+Installation is easy; just run `python -m venv venv && source venv/bin/activate && pip install .` This is tested on python3.12
 
 # How to use
 ```
