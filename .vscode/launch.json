@@ -73,11 +73,13 @@
                 "--sandbox-dir",
                 // "${workspaceFolder}/sandbox-benchmark-numerical",
                 // "${workspaceFolder}/sandbox-benchmark-classical",
-                "${workspaceFolder}/sandbox-benchmark-oversubscription",
+                // "${workspaceFolder}/sandbox-benchmark-oversubscription",
+                "${workspaceFolder}/sandbox-simulators-paper-results",
                 "--outputdir",
                 // "${workspaceFolder}/sandbox-benchmark-numerical/results-analysis"
                 // "${workspaceFolder}/sandbox-benchmark-classical/results-analysis-new"
-                "${workspaceFolder}/sandbox-benchmark-oversubscription/results-analysis"
+                // "${workspaceFolder}/sandbox-benchmark-oversubscription/results-analysis"
+                "${workspaceFolder}/sandbox-simulators-paper-results/results-analysis"
                 
             ],
             "justMyCode": false

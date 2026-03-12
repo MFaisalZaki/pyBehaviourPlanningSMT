@@ -22,6 +22,8 @@ planner_name_map = {
     'fi-bc': r'$\mathrm{FI_{BDC}}$',
     'fbi-smt': r'$\mathrm{FBI_{SMT}}$',
     'fbi-smt-naive': r'$\mathrm{FBI_{SMT}^{naive}}$',
+    'iwk1-k': r'$\mathrm{FBI_{LTLf}^{naive}}$',
+    'iwk1-diverse': r'$\mathrm{FBI_{LTLf}}$'
 }
 
 color_map = {
@@ -29,6 +31,8 @@ color_map = {
     r'$\mathrm{FBI_{SMT}^{naive}}$': '#d62728',  # red
     r'$\mathrm{FI_{BDC}}$':          '#2ca02c',  # green
     r'$\mathrm{SymK}$':              '#9467bd',  # purple
+    r'$\mathrm{FBI_{LTLf}}$': '#1f77b4',  # blue
+    r'$\mathrm{FBI_{LTLf}^{naive}}$': '#d62728'  # red
 }
 
 plt.rcParams.update({
