@@ -19,7 +19,7 @@ TIMEOUT_LIMIT = 1800  # seconds
 
 planner_name_map = {
     'symk': r'$\mathrm{SymK}$',
-    'fi-bc': r'$\mathrm{FI_{bdc}}$',
+    'fi-bc': r'$\mathrm{FI_{BDC}}$',
     'fbi-smt': r'$\mathrm{FBI_{SMT}}$',
     'fbi-smt-naive': r'$\mathrm{FBI_{SMT}^{naive}}$',
 }
@@ -27,18 +27,18 @@ planner_name_map = {
 color_map = {
     r'$\mathrm{FBI_{SMT}}$':         '#1f77b4',  # blue
     r'$\mathrm{FBI_{SMT}^{naive}}$': '#d62728',  # red
-    r'$\mathrm{FI_{bdc}}$':          '#2ca02c',  # green
+    r'$\mathrm{FI_{BDC}}$':          '#2ca02c',  # green
     r'$\mathrm{SymK}$':              '#9467bd',  # purple
 }
 
 plt.rcParams.update({
-    'font.size': 16,
-    'axes.titlesize': 16,
-    'axes.labelsize': 16,
-    'xtick.labelsize': 16,
-    'ytick.labelsize': 16,
-    'legend.fontsize': 16,
-    'figure.titlesize': 16,
+    'font.size': 25,
+    'axes.titlesize': 25,
+    'axes.labelsize': 25,
+    'xtick.labelsize': 25,
+    'ytick.labelsize': 25,
+    'legend.fontsize': 25,
+    'figure.titlesize': 25,
     'mathtext.default': 'regular',
     'font.family': 'serif',
     'mathtext.fontset': 'cm'
@@ -271,7 +271,7 @@ def generate_plots(resutls, dumpdir):
             ax.set_xlabel('')
             ax.grid(True)
             # Adjust x-axis labels to prevent overlapping
-            ax.tick_params(axis='x', labelsize=20)
+            ax.tick_params(axis='x', labelsize=25)
             ax.tick_params(axis='y', labelsize=25)
             plt.setp(ax.get_xticklabels(), ha='center')
 
@@ -283,6 +283,39 @@ def generate_plots(resutls, dumpdir):
         plt.tight_layout()
         plt.savefig(os.path.join(dumpdir, f'violin-bdc-{q}-{k}.pdf'), bbox_inches='tight', dpi=600)
         plt.clf()
+
+        # Additional layout: pages of 2x2 subplots (up to 4 groups per figure)
+        grouped_planners = list(planners_groups[f'q={q}'].items())
+        for page_idx in range(0, len(grouped_planners), 4):
+            page_groups = grouped_planners[page_idx:page_idx + 4]
+            fig, axes = plt.subplots(2, 2, figsize=(20, 14), sharey=False)
+            axes = axes.flatten()
+
+            for ax_idx, (ax, (group_name, planners)) in enumerate(zip(axes, page_groups)):
+                df = pd.DataFrame(planners, columns=['Planner', 'Instance', 'Value'])
+                _sorted_order = [p for p in sorted_order if p in set(e[0] for e in planners)]
+                sns.violinplot(x='Planner', y='Value', data=df, ax=ax, palette=color_map, order=_sorted_order, cut=0, inner='box')
+                ax.set_title(group_name, fontsize=25)
+                ax.set_xlabel('')
+                ax.grid(True)
+                ax.tick_params(axis='x', labelsize=25)
+                ax.tick_params(axis='y', labelsize=25)
+                plt.setp(ax.get_xticklabels(), ha='center')
+
+                if ax_idx % 2 == 0:
+                    ax.set_ylabel("Behaviour diversity count", fontsize=25)
+                else:
+                    ax.set_ylabel("")
+
+            for ax in axes[len(page_groups):]:
+                ax.set_visible(False)
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(dumpdir, f'violin-bdc-{q}-page-{(page_idx // 4) + 1}.pdf'), bbox_inches='tight', dpi=600)
+            plt.close(fig)
+
+        
+        pass
     
     ## attempt for the scatter plot.
     # markers = ['o', 's', '^', 'D', 'v', 'P', '*', 'X', '<', '>']
