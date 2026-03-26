@@ -59,7 +59,7 @@ def parse_filename(taskfilename):
     if 'naive' in taskfilename:
         pass
 
-    task_type = next(filter(lambda t: t in taskfilename, ['classical', 'numerical', 'oversubscription']), None)
+    task_type = next(filter(lambda t: t in taskfilename, ['classical', 'numerical', 'oversubscription', 'narrative']), None)
     assert task_type is not None, f"Task type not found in task filename: {taskfilename}"
     details = taskfilename.split(f'-{task_type}-')
     q, k = details[0].split('-')[:2]
@@ -251,7 +251,8 @@ def generate_plots(resutls, dumpdir):
     planner_names = set()
     planners_groups = defaultdict(lambda: defaultdict(list))
     for q, q_values in resutls['planner-details'].items():
-        
+        if 2 in q_values:
+            q_values.pop(2)
         for k, k_values in q_values.items():
             planner_names.update(set(planner_name_map[planner] for planner in k_values.keys()))
             
@@ -265,6 +266,9 @@ def generate_plots(resutls, dumpdir):
             planners_groups[f'q={q}'][f'k={k}'] = list(chain.from_iterable([(planner_name_map[planner], f"{d['domain']}-{d['instance']}", d['behaviour-count']) for d in details] for planner, details in filterd_details.items()))
 
         sorted_order = sorted(planner_names)
+        # remove keys with empty lists.
+        planners_groups[f'q={q}'] = {k:v for k,v in planners_groups[f'q={q}'].items() if len(v) > 0}
+
         fig, axes = plt.subplots(1, len(planners_groups[f'q={q}']), figsize=(20, 8), sharey=False)
         # Plot each group in a subplot
         for ax, (group_name, planners) in zip(axes, planners_groups[f'q={q}'].items()):
