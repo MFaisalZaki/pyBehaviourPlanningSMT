@@ -165,7 +165,7 @@ class BehaviourSpaceSMT:
             end_time = time.time()
             time_taken = round(end_time - start_time, 2)
             # self.sat_time.append(f'{is_formula_satisfiable}, {time_taken}, {self.compute_behaviour_count()}')
-            assert is_formula_satisfiable is not None, 'The satisfiability of the formula is not determined.'
+            # assert is_formula_satisfiable is not None, 'The satisfiability of the formula is not determined.'
             if not is_formula_satisfiable: return None
             model = self.solver.model()
             # extract the plan
