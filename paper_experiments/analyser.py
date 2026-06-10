@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from itertools import product, combinations
 from scipy import stats
 from itertools import combinations, chain
 from collections import defaultdict, Counter
@@ -522,6 +523,94 @@ def remove_wrong_duplicates(raw_results):
     cleaned_results = list(filter(lambda x: x not in to_remove_entries, raw_results))
     return cleaned_results
 
+def compute_bdc_per_domain(raw_results):
+
+    planners_tags = set(e['planner'] for e in raw_results)
+
+    common_instances = defaultdict(set)
+    for e in raw_results:
+        common_instances[(e['q'], e['k'], f"{e['domain']}$${e['instance']}")].add(e['planner'])
+
+    # filter out the instances with less than len(planners_tags) planners.
+    common_instances = list({k:v for k,v in common_instances.items() if len(v) == len(planners_tags)}.keys())
+
+    grouped_bdc = defaultdict(lambda: defaultdict(list))
+    for q, k, domain_instance in common_instances:
+        for planner_instances in filter(lambda e: e['q'] == q and e['k'] == k and f"{e['domain']}$${e['instance']}" == domain_instance, raw_results):
+            grouped_bdc[(q,k, os.path.dirname(domain_instance.split('$$')[0]))][planner_instances['planner']].append(planner_instances['behaviour-count'])
+    
+    summed_bdc_per_domain = defaultdict(lambda: defaultdict(int))
+    for key, value in grouped_bdc.items():
+        for planner, bdc_values in value.items():
+            summed_bdc_per_domain[key][planner] = sum(bdc_values)
+    
+    q_values = sorted(set(e[0] for e in grouped_bdc.keys()))
+    k_values = sorted(set(e[1] for e in grouped_bdc.keys()))
+    domains  = sorted(set(e[2] for e in grouped_bdc.keys()))
+    planners = sorted(set.union(*[set(e.keys()) for e in grouped_bdc.values()]))
+
+    table = ['q, k, domain,' + ', '.join(p for p in planners)]
+    for key in product(q_values, k_values, domains):
+        if not key in summed_bdc_per_domain: continue
+        table.append(', '.join(list(map(str, key))) + ', ' + ', '.join([str(summed_bdc_per_domain[key][planner]) for planner in planners]))
+    
+    compared_bdc = defaultdict(lambda: defaultdict(dict))
+    for key in product(q_values, k_values, domains):
+        if not key in summed_bdc_per_domain: continue
+        for planner1, planner2 in combinations(planners, 2):
+            if (planner1, planner2) in compared_bdc[key] or (planner2, planner1) in compared_bdc[key]: continue
+            compared_bdc[str(key)][f'({planner1}, {planner2})'] = {
+                'planner1': planner1,
+                'planner2': planner2,
+                'planner1_bdc': summed_bdc_per_domain[key][planner1],
+                'planner2_bdc': summed_bdc_per_domain[key][planner2],
+                'difference': abs(summed_bdc_per_domain[key][planner1] - summed_bdc_per_domain[key][planner2]),
+                f'{planner1} > {planner2}': summed_bdc_per_domain[key][planner1] >= summed_bdc_per_domain[key][planner2]
+            }
+            pass    
+    
+    # delete empty entries in compared_bdc
+    compared_bdc = {k:v for k,v in compared_bdc.items() if len(v) > 0}
+
+    compared_bdc_detailed = defaultdict(lambda: defaultdict(dict))
+    for key in product(q_values, k_values):
+        for planner1, planner2 in combinations(planners, 2):
+            planner1_equal_planner2        = set()
+            planner1_greater_than_planner2 = set()
+            planner1_less_than_planner2    = set()
+            greater_than_diff_values       = []
+            less_than_diff_values          = []
+            greater_than_domain_instance_count = defaultdict(int)
+            less_than_domain_instance_count    = defaultdict(int)
+            for domain, instance in list( e[2].split('$$') for e in  filter(lambda e: e[0] == key[0] and e[1] == key[1] , common_instances)):
+                p1_value_detail = next(filter(lambda e: (e['q'], e['k']) == key and (e['domain'], e['instance']) == (domain, instance) and e['planner'] == planner1, raw_results), None)
+                p2_value_detail = next(filter(lambda e: (e['q'], e['k']) == key and (e['domain'], e['instance']) == (domain, instance) and e['planner'] == planner2, raw_results), None)
+                if p1_value_detail['behaviour-count'] == p2_value_detail['behaviour-count']: 
+                    planner1_equal_planner2.add(f"{domain}$${instance}")
+                elif p1_value_detail['behaviour-count'] < p2_value_detail['behaviour-count']:
+                    planner1_less_than_planner2.add(f"{domain}$${instance}")
+                    less_than_diff_values.append(p2_value_detail['behaviour-count'] - p1_value_detail['behaviour-count'])
+                    less_than_domain_instance_count[os.path.dirname(domain)] += 1
+                elif p1_value_detail['behaviour-count'] > p2_value_detail['behaviour-count']:
+                    planner1_greater_than_planner2.add(f"{domain}$${instance}")
+                    greater_than_diff_values.append(p1_value_detail['behaviour-count'] - p2_value_detail['behaviour-count'])
+                    greater_than_domain_instance_count[os.path.dirname(domain)] += 1
+
+            compared_bdc_detailed[str(key)][f'({planner1}, {planner2})'] = {
+                'greater-than-instances-count': len(planner1_greater_than_planner2),
+                'greater-than-instances': list(planner1_greater_than_planner2),
+                'less-than-instances-count': len(planner1_less_than_planner2),
+                'less-than-instances': list(planner1_less_than_planner2),
+                'equal-instances-count': len(planner1_equal_planner2),
+                'equal-instances': list(planner1_equal_planner2),
+                'greater-than-diff-values': sum(greater_than_diff_values),
+                'less-than-diff-values': sum(less_than_diff_values),
+                'greater-than-domain-instance-count': dict(greater_than_domain_instance_count),
+                'less-than-domain-instance-count': dict(less_than_domain_instance_count),
+            }
+            
+    return table, compared_bdc, compared_bdc_detailed
+
 def main():
     args = arg_parser().parse_args()
     resultsdir = os.path.join(args.sandbox_dir, 'resultsdir')
@@ -530,6 +619,7 @@ def main():
     raw_results = read_raw_results(resultsdir)
     raw_results = remove_noisy_entries(raw_results)
     stats_table = generate_summary_tables(deepcopy(raw_results))
+    bdc_per_domain_table, compared_bdc, compared_bdc_detailed = compute_bdc_per_domain(deepcopy(raw_results))
     generate_plots(stats_table, os.path.join(outputdir, 'plots'))
 
 
@@ -549,6 +639,15 @@ def main():
 
     with open(os.path.join(outputdir, 'summary_tables.json'), 'w') as f:
         json.dump(stats_table, f, indent=4)
+    
+    with open(os.path.join(outputdir, 'bdc_per_domain_table.csv'), 'w') as f:
+        f.write('\n'.join(bdc_per_domain_table))
+    
+    with open(os.path.join(outputdir, 'compared_bdc.json'), 'w') as f:
+        json.dump(compared_bdc, f, indent=4)
+    
+    with open(os.path.join(outputdir, 'compared_bdc_detailed.json'), 'w') as f:
+        json.dump(compared_bdc_detailed, f, indent=4)
 
     pass
 
