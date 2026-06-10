@@ -179,6 +179,15 @@ def generate_summary_tables(raw_results):
                         f'{planner}': sum([e['behaviour-count'] for e in fitlered_planners_results[planner]]) for planner in planners
                     }
 
+                    # Accumulated BDC per domain per planner (over the common instances).
+                    _per_domain_bdc = defaultdict(lambda: defaultdict(int))
+                    for planner in planners:
+                        for e in fitlered_planners_results[planner]:
+                            _per_domain_bdc[planner][e['domain']] += e['behaviour-count']
+                    _behaviour_count_details[q][k][planners_key]['per-domain'] = {
+                        planner: dict(sorted(_per_domain_bdc[planner].items())) for planner in planners
+                    }
+
                     # compute statistical significance.
                     bc_values = [[e['behaviour-count'] for e in fitlered_planners_results[planner]] for planner in fitlered_planners_results.keys()]
                     p_value = round(stats.ttest_rel(*bc_values).pvalue, 3) if len(planners) == 2 else round(stats.f_oneway(*bc_values).pvalue, 3)
