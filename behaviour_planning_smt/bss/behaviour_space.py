@@ -76,7 +76,7 @@ class BehaviourSpaceSMT:
 
         plannername   = None
         plannerparams = {}
-        if any([is_numeric_checker]) or is_oversubscription:
+        if any(is_numeric_checker) or is_oversubscription:
             plannername    = 'oversubscription[symk]' if is_oversubscription else 'SMTPlanner'
             if is_oversubscription:
                 plannerparams |= {"symk_search_time_limit": "900s"}
