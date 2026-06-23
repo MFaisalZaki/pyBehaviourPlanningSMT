@@ -104,7 +104,8 @@ def encode_n(self, **kwargs):
     # disable the actions in the last step of the formula.
     last_step_actions = list(map(lambda x: x[len(self)-1], self.up_actions_to_z3.values()))
     #self.assertions.append(z3.PbEq([(var, 1) for var in last_step_actions], 0, ctx=self.ctx))
-    self.assertions.append(z3.Not(z3.Or(last_step_actions), ctx=self.ctx))
+    if len(last_step_actions) > 0:
+        self.assertions.append(z3.Not(z3.Or(last_step_actions), ctx=self.ctx))
 
     # encode possible goal states.
     if horizon_planning:
@@ -113,9 +114,9 @@ def encode_n(self, **kwargs):
         # update the goal_states for oversubscription planning.
         _fn = z3.Or if self.task_is_oversubscription_planning else z3.And
         self.goal_states = list(map(lambda x: _fn(x.children()), self.goal_states))
-
-        # encode possible goal states.
-        self.assertions.append(z3.Or(self.goal_states))
+        if len(self.goal_states) > 0:
+            # encode possible goal states.
+            self.assertions.append(z3.Or(self.goal_states))
 
         # locate the first goal state step.
         offset = 0 if self.task_is_oversubscription_planning else 1
