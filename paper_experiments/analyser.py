@@ -539,10 +539,16 @@ def compute_bdc_per_domain(raw_results):
         for planner_instances in filter(lambda e: e['q'] == q and e['k'] == k and f"{e['domain']}$${e['instance']}" == domain_instance, raw_results):
             grouped_bdc[(q,k, os.path.dirname(domain_instance.split('$$')[0]))][planner_instances['planner']].append(planner_instances['behaviour-count'])
     
+    # do an asserstion where each key in grouped_bdc all planners must have the same number of entries.
+    for key, value in grouped_bdc.items():
+        assert len(set(len(v) for v in value.values())) == 1, f"Not all planners have the same number of entries for key {key}: {value}"
+
     summed_bdc_per_domain = defaultdict(lambda: defaultdict(int))
     for key, value in grouped_bdc.items():
         for planner, bdc_values in value.items():
             summed_bdc_per_domain[key][planner] = sum(bdc_values)
+            summed_bdc_per_domain[key][f'{planner}-len'] = len(bdc_values)
+
     
     q_values = sorted(set(e[0] for e in grouped_bdc.keys()))
     k_values = sorted(set(e[1] for e in grouped_bdc.keys()))
