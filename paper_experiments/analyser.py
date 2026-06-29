@@ -609,7 +609,7 @@ def compute_bdc_per_domain(raw_results):
                 'less-than-domain-instance-count': dict(less_than_domain_instance_count),
             }
             
-    return table, compared_bdc, compared_bdc_detailed
+    return table, compared_bdc, compared_bdc_detailed, summed_bdc_per_domain
 
 def main():
     args = arg_parser().parse_args()
@@ -619,7 +619,7 @@ def main():
     raw_results = read_raw_results(resultsdir)
     raw_results = remove_noisy_entries(raw_results)
     stats_table = generate_summary_tables(deepcopy(raw_results))
-    bdc_per_domain_table, compared_bdc, compared_bdc_detailed = compute_bdc_per_domain(deepcopy(raw_results))
+    bdc_per_domain_table, compared_bdc, compared_bdc_detailed, summed_bdc_per_domain = compute_bdc_per_domain(deepcopy(raw_results))
     generate_plots(stats_table, os.path.join(outputdir, 'plots'))
 
 
@@ -648,6 +648,9 @@ def main():
     
     with open(os.path.join(outputdir, 'compared_bdc_detailed.json'), 'w') as f:
         json.dump(compared_bdc_detailed, f, indent=4)
+
+    with open(os.path.join(outputdir, 'summed_bdc_per_domain.json'), 'w') as f:
+        json.dump({str(k):v for k,v in summed_bdc_per_domain.items()}, f, indent=4)
 
     pass
 
