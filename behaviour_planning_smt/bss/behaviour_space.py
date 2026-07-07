@@ -39,7 +39,7 @@ features_map = {
 }
 
 class BehaviourSpaceSMT:
-    def __init__(self, t, f):
+    def __init__(self, t, f, **args):
 
         # apply a set-del compiler to the task.
         self.root_task = t
@@ -54,7 +54,7 @@ class BehaviourSpaceSMT:
         self.encoder        = None
         self.compiled_task  = None
         self.task           = task
-        self.optimal_plan_length = self.__infer_formula_length__(task)
+        self.optimal_plan_length = self.__infer_formula_length__(task, args.get('use_pypmt')) if args.get('horizon_length') is None else args.get('horizon_length')
         self.quality_bound  = next(filter(lambda e: e[0] == 'cb', f), ['cb', {'quality-bound': 1.0}])[1]['quality-bound']
         self.formula        = self.__encode_formula__(int(self.optimal_plan_length * self.quality_bound)) 
         self.features       = {feat_name: features_map[feat_name](self.compiled_task.problem, addinfo) for feat_name, addinfo in self.__update_addinfo__(f[:])}
@@ -63,7 +63,7 @@ class BehaviourSpaceSMT:
         self.log      = []
         self.sat_time = []
 
-    def __infer_formula_length__(self, task):
+    def __infer_formula_length__(self, task, usepypmt):
         # This should solve the planning task using up.
         # if the planning task is oversubscription planning, then we need to remove the oversubscription metric.
         # to make sure that the planner solves get the formula len.
@@ -76,7 +76,7 @@ class BehaviourSpaceSMT:
 
         plannername   = None
         plannerparams = {}
-        if any(is_numeric_checker) or is_oversubscription:
+        if any(is_numeric_checker) or is_oversubscription or usepypmt:
             plannername    = 'oversubscription[symk]' if is_oversubscription else 'SMTPlanner'
             if is_oversubscription:
                 plannerparams |= {"symk_search_time_limit": "900s"}
@@ -87,7 +87,7 @@ class BehaviourSpaceSMT:
                 compilation_list += [["up_grounder", CompilationKind.GROUNDING]]
                 plannerparams |= {
                     "encoder": "EncoderForall", 
-                    "upper-bound": 1000,
+                    "ub": 1000,
                     "search-strategy": "SMTSearch", 
                     "configuration": "forall", 
                     "run-validation": False,

@@ -2,11 +2,11 @@ import z3
 from behaviour_planning_smt.bss.behaviour_space import BehaviourSpaceSMT
 
 class ForbiddenBehaviorSMTPlanner:
-    def __init__(self, task, features):
-        self.solver_timeout     =  300000
+    def __init__(self, task, features, **args):
+        self.solver_timeout     = 300000
         self.solver_memorylimit = 16000
         self.plan_set           = set()
-        self.behaviour_space    = BehaviourSpaceSMT(task, features)
+        self.behaviour_space    = BehaviourSpaceSMT(task, features, **args)
         self.ctx                = self.behaviour_space.encoder.ctx
 
     def __behaviour_generator__(self, planset):
