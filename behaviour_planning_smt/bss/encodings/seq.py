@@ -44,7 +44,7 @@ def encode_n(self, **kwargs):
     horizon_planning = kwargs.get('horizon_planning', False)
     skip_actions = kwargs.get('skip_actions', False)
 
-    self.task_is_oversubscription_planning = self.task.kind.has_oversubscription() or self.task.kind.has_oversubscription_kind()
+    self.task_is_oversubscription_planning = self.task.kind.has_oversubscription()
 
     self.goal_states = []
     self.assertions = []
@@ -60,7 +60,8 @@ def encode_n(self, **kwargs):
         # This is a bug we need to fix this. 
         # self.goal_states.append(_fn(flattern_expression(formula['goal'])) if (nested_and or nested_or) else formula['goal'])
         # self.goal_states.append(formula['goal'] if not 'And(' in str(formula['goal'].arg(0)) else formula['goal'].arg(0))
-        self.goal_states.append(flattern_expression(formula['goal']))
+        _gstate = flattern_expression(formula['goal'])
+        if len(_gstate.children()) > 0: self.goal_states.append(_gstate)
         if t == 0: self.assertions.append(formula['initial'])
         del formula['goal']
         del formula['initial']
@@ -121,6 +122,7 @@ def encode_n(self, **kwargs):
         # locate the first goal state step.
         offset = 0 if self.task_is_oversubscription_planning else 1
         for idx, goal_state in enumerate(self.goal_states):
+            # if len(goal_state.children()) == 0: continue # skip empty goal states.
             pre_goal_states = [goal_state] if idx == 0 else [goal_state, z3.Not(z3.Or(self.goal_states[:idx]), ctx=self.ctx)]
             self.assertions.append(z3.And(pre_goal_states) == (self.horizon_var == z3.IntVal(idx+offset, ctx=self.ctx)))
 
@@ -133,6 +135,7 @@ def encode_n(self, **kwargs):
             for t2 in range(t+1, len(self)):
                 after_goal_state_actions.extend(self.get_actions_vars(t2))
             #self.assertions.append(goal_state == z3.PbEq([(var, 1) for var in after_goal_state_actions], 0, ctx=self.ctx))
+            # if len(goal_state.children()) == 0: continue # skip empty goal states.
             self.assertions.append(goal_state == z3.Not(z3.Or(after_goal_state_actions), ctx=self.ctx))
 
     return self.assertions

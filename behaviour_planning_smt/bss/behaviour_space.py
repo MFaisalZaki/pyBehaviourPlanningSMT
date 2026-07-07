@@ -56,7 +56,7 @@ class BehaviourSpaceSMT:
         self.task           = task
         self.optimal_plan_length = self.__infer_formula_length__(task, args.get('use_pypmt')) if args.get('horizon_length') is None else args.get('horizon_length')
         self.quality_bound  = next(filter(lambda e: e[0] == 'cb', f), ['cb', {'quality-bound': 1.0}])[1]['quality-bound']
-        self.formula        = self.__encode_formula__(int(self.optimal_plan_length * self.quality_bound)) 
+        self.formula        = self.__encode_formula__(int(self.optimal_plan_length * self.quality_bound), args.get('horizon_planning_mode', False)) 
         self.features       = {feat_name: features_map[feat_name](self.compiled_task.problem, addinfo) for feat_name, addinfo in self.__update_addinfo__(f[:])}
         self.solver         = self.__create_smt_solver__(self.formula)
 
@@ -103,7 +103,7 @@ class BehaviourSpaceSMT:
             seedplan = result.plan if result.status in UPResults.POSITIVE_OUTCOMES else None
         return 0 if seedplan is None else len(seedplan.actions)
 
-    def __encode_formula__(self, n):
+    def __encode_formula__(self, n, horizon_planning_mode):
         is_numeric_checker  = [self.task.kind.has_fluents_in_numeric_assignments()]
         is_numeric_checker += [self.task.kind.has_numeric_fluents()]
         is_numeric_checker += [self.task.kind.has_numbers()]
@@ -124,7 +124,7 @@ class BehaviourSpaceSMT:
         args = {
             'formula_length': n, 
             'disable_after_goal_state_actions': False,
-            'horizon_planning': False,
+            'horizon_planning': horizon_planning_mode,
             'skip_actions' : False
         }
 
@@ -178,7 +178,7 @@ class BehaviourSpaceSMT:
             setattr(lifted_plan, 'behaviour_attr', behaviour_vars if len(behaviour_vars) > 0 else None)
             setattr(lifted_plan, 'behaviour_str', re.sub(r' {2,}', '  ', str(lifted_plan.behaviour_expr)).replace('\n', ''))
             setattr(lifted_plan, 'z3_actions_vars', plan.z3_actions_vars)
-            return lifted_plan
+            return lifted_plan if len(lifted_plan.actions) > 0 else None
 
     def reset(self):
         self.solver = self.__create_smt_solver__()
