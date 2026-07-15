@@ -1,0 +1,2 @@
+(:resource rover0 0 100 5)
+(:resource rover1 0 100 5)

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "numeric-example",
+            "name": "tutorial-getting-started",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/paper_examples/numeric_planning.py",
+            "program": "${workspaceFolder}/tutorials/01_getting_started.py",
             "console": "integratedTerminal"
         },
         {
