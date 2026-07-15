@@ -4,7 +4,6 @@ import z3
 from collections import defaultdict
 from lark import Lark, Transformer, v_args
 from behaviour_planning_smt.bss.features.base import DimensionConstructorSMT
-from behaviour_planning_smt.bss.features.base import DimensionConstructorSimulator
 
 class Resources(DimensionConstructorSMT):
     def __init__(self, name, task, additional_information):
@@ -44,23 +43,6 @@ class ResourceCountSMT(Resources):
         retvalue = model.evaluate(self.var, model_completion = True)
         self.var_domain.add(str(retvalue))
         return self.var == retvalue
-
-class ResourceCountSimulator(DimensionConstructorSimulator):
-    def __init__(self, task, addinfo):
-        super().__init__(task, 'ru', {'resources_list': parse_resource_file(addinfo)})
-        self.addinfo['objects'] = set(map(str,filter(lambda e: e.name in set(map(lambda e: e['name'], self.addinfo['resources_list'].values())), self.task.all_objects)))
-    
-    def plan_behaviour(self, plan):
-        resource_usage = {o: 0 for o in self.addinfo['objects']}
-        for action in plan.actions:
-            for used_resource in set.intersection(set(map(str, action.actual_parameters)), set(self.addinfo['objects'])):
-                resource_usage[used_resource] += 1
-        val = len(list(filter(lambda e: e[1] > 0, resource_usage.items())))
-        self.domain.add(val)
-        return f'{self.name}:' + str(val)
-
-
-
 
 class ResourceTransformer(Transformer):
     def resource_line(self, token):

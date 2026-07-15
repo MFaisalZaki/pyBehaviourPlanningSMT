@@ -11,6 +11,7 @@ pip install setuptools
 pip install unified-planning
 pip install --no-cache up-symk
 pip install git+https://github.com/MFaisalZaki/forbiditerative.git
+pip install git+https://github.com/MFaisalZaki/BehaviourDiversityCounter.git
 pip install lark
 pip install up-fast-downward
 pip install matplotlib 

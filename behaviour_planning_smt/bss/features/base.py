@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 class DimensionConstructorSMT:
     def __init__(self, name, task, additional_information):
         self.name       = name
@@ -24,11 +22,3 @@ class DimensionConstructorSMT:
         This function should return the z3 expression of the dimension given the model.
         """
         raise NotImplementedError()
-
-
-class DimensionConstructorSimulator:
-    def __init__(self, task, name, addinfo):
-        self.task = task
-        self.name = name
-        self.addinfo = addinfo
-        self.domain = set()

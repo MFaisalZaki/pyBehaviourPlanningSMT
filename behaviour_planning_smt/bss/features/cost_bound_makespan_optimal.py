@@ -1,7 +1,6 @@
 import z3
 
 from behaviour_planning_smt.bss.features.cost_bound_dims import CostBoundSMT
-from behaviour_planning_smt.bss.features.base import DimensionConstructorSimulator
 
 class MakespanOptimalCostSMT(CostBoundSMT):
     def __init__(self, task, additional_information):
@@ -43,12 +42,3 @@ class MakespanOptimalCostSMT(CostBoundSMT):
         retvalue = model.evaluate(self.var, model_completion = True)
         self.var_domain.add(str(retvalue))
         return self.var == retvalue
-
-
-class MakespanOptimalCostSimulator(DimensionConstructorSimulator):
-    def __init__(self, task, addinfo):
-        super().__init__(task, 'cb', addinfo)
-    
-    def plan_behaviour(self, plan):
-        self.domain.add(len(plan.actions))
-        return f'{self.name}:' + str(len(plan.actions))

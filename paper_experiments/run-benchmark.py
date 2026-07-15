@@ -23,9 +23,6 @@ from utilities import construct_results_file, add_utility_values
 # from behaviour_planning.over_domain_models.smt.shortcuts import GoalPredicatesOrderingSMT, MakespanOptimalCostSMT, ResourceCountSMT, UtilityValueSMT, FunctionsSMT
 # from behaviour_planning.over_domain_models.smt.shortcuts import ForbidBehaviourIterativeSMT
 
-# from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import BehaviourCountSimulator
-# from behaviour_planning.over_domain_models.smt.bss.behaviour_count.behaviour_counter_simulator import GoalPredicatesOrderingSimulator, MakespanOptimalCostSimulator, ResourceCountSimulator, UtilityValueSimulator, FunctionsSimulator
-
 # from behaviour_planning.over_domain_models.smt.fbi.planner.planner import ForbidBehaviourIterativeSMT
 
 
@@ -35,9 +32,32 @@ def arg_parser():
     parser.add_argument('--outputdir', type=str, required=True, help='Directory to store output files.')
     return parser
 
+# The behaviour is inferred by the BehaviourDiversityCounter package:
+# https://github.com/MFaisalZaki/BehaviourDiversityCounter
+#
+# Its dimensions do not use quite the same names as the SMT behaviour space, so
+# the dimension list is translated on its way to the counter and the copy handed
+# to the planner is left alone.
+COUNTER_DIMENSION_NAMES = {
+    # Here 'ru' encodes how many distinct resources a plan uses. The counter's
+    # 'ru' reports the set of used resources instead, and its 'rc' reports the
+    # per-resource usage counts, which is what we count behaviours by.
+    'ru': 'rc'
+}
+
+def counter_dimensions(dims):
+    ret_dims = []
+    for name, addinfo in dims:
+        # The counter's cost bound feature estimates its domain from a 'q' key.
+        # We carry the same value under 'quality-bound', so pass both rather
+        # than mutating the planner's copy of the dimension.
+        if name == 'cb': addinfo = addinfo | {'q': addinfo['quality-bound']}
+        ret_dims.append([COUNTER_DIMENSION_NAMES.get(name, name), addinfo])
+    return ret_dims
+
 def select_k_plans(task, k, dims, planlist):
-    from behaviour_planning_smt.bss.behaviour_diversity_count import BehaviourDiversityCount
-    bspace = BehaviourDiversityCount(task, planlist, dims)
+    from behaviour_diversity_counter.behaviour_diversity_counter import BehaviourDiversityCounter
+    bspace = BehaviourDiversityCounter(task, planlist, counter_dimensions(dims))
     return bspace, bspace.optimise(k)
 
 def run_fbi(taskdetails, dims):

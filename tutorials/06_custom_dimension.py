@@ -101,7 +101,9 @@ print(f'\nValues this dimension took: {sorted(planner.behaviour_space.features["
 # z3.And(...) from expr(). Anything the encoder can talk about and expr() can
 # pin down works as a dimension.
 #
-# The DimensionConstructorSimulator base class in the same module is a separate,
-# non-SMT contract: it reports a plan's behaviour by walking the plan's states,
-# and is used for counting behaviours in paper_experiments. Implementing it is
-# not needed to plan with a dimension.
+# This dimension is all the planner needs. Inferring the behaviour of plans that
+# are already written -- replaying them against the task rather than reading them
+# off a z3 model -- is a separate job, and a separate package:
+# https://github.com/MFaisalZaki/BehaviourDiversityCounter. A dimension there is
+# a different contract, so a new dimension that both sides should agree on has to
+# be written once for each.
