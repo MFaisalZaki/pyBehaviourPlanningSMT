@@ -36,7 +36,7 @@ void CLIParser::print_help(const char* program_name) {
         "                              fn:FILE   numeric function values, FILE = functions file\n"
         "                              ac:NAME   action count (example plugin)\n"
         "  --indicator NAME[:ARG]    diversity-indicator plugin to optimise (default bdc,\n"
-        "                            behaviour diversity count)\n"
+        "                            behaviour diversity count; bms = BehaviourMaxSum)\n"
         "  --list-dimensions         list the registered dimension plugins and exit\n"
         "  --list-encoders           list the registered encoder plugins and exit\n"
         "  --list-indicators         list the registered diversity-indicator plugins and exit\n"

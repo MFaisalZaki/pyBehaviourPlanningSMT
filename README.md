@@ -128,14 +128,15 @@ Python API exposes them as `planner.behaviour_space.pairwise_behaviour_distances
 ## Diversity indicators
 The diversification strategy itself is a plugin category: a **diversity
 indicator** is the optimisation metric the planner maximises over the
-behaviour space. The default and currently only indicator is **`bdc`
-(behaviour diversity count)**: it maximises the number of distinct behaviours
-by forbidding every behaviour found and generating another one, then fills
-the remaining quota with plans that reuse known behaviours but differ from
-every known plan. Select it explicitly with `--indicator bdc` (or
-`indicator='bdc'` in Python); parameterized indicators take
-`--indicator name:arg`. Further indicators — for instance ones maximising
-pairwise behaviour distance — implement the interface in
+behaviour space, selected with `--indicator NAME[:ARG]` (or
+`indicator='name'` in Python). Two ship with the planner:
+
+| Name | Indicator | Strategy |
+| ---- | --------- | -------- |
+| `bdc` (default) | Behaviour diversity count | Maximises the number of distinct behaviours: forbid every behaviour found, generate another one; once the space is exhausted, fill the quota with plans that reuse known behaviours but differ from every known plan. |
+| `bms` (alias `BehaviourMaxSum`) | Behaviour max-sum | Maximises the sum of pairwise behaviour distances (computed with the dimensions' distance functions): grow the set like `bdc`, then keep generating further new behaviours and swap one into the set whenever the swap strictly increases the total; with fewer behaviours than requested plans it just returns plans. `ARG` bounds the generation rounds (default `5 * num-plans`). |
+
+Further indicators implement the interface in
 `cpp/src/bss/diversity_indicator.hpp`, use the dimensions' distance
 functions via `space.dimensions()`, and register with a
 `DiversityIndicatorPlugin` in a file under `cpp/src/bss/indicators/`.
