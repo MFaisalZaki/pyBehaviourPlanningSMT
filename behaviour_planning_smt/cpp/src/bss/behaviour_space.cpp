@@ -9,33 +9,25 @@ namespace bp {
 
 BehaviourSpace::BehaviourSpace(const Problem& problem, z3::context& ctx, const Config& config,
                                int optimal_plan_length,
-                               std::vector<BoundedSeqEncoder::WeightedGoal> oversubscription_goals)
+                               std::vector<Encoder::WeightedGoal> oversubscription_goals)
     : problem_(problem), ctx_(ctx), optimal_plan_length_(optimal_plan_length) {
     const int formula_length =
         static_cast<int>(optimal_plan_length * config.planner.quality_bound);
 
-    encoder_ = std::make_unique<BoundedSeqEncoder>(problem, ctx, formula_length,
-                                                   config.planner.horizon_planning_mode,
-                                                   std::move(oversubscription_goals));
+    // Build the requested encoder through its plugin registry.
+    const auto& encoder_entry = EncoderRegistry::instance().get(config.planner.encoder);
+    encoder_ = encoder_entry.factory(EncoderContext{
+        problem, ctx, formula_length, config.planner.horizon_planning_mode,
+        std::move(oversubscription_goals), /*seed_mode=*/false});
 
-    // Build the requested dimensions, in the order given on the command line.
+    // Build the requested dimensions through their plugin registry, in the
+    // order given on the command line. Each dimension checks for itself that
+    // it supports the active encoder.
+    const DimensionContext dimension_context{optimal_plan_length_,
+                                             config.planner.quality_bound};
     for (const auto& spec : config.planner.dimensions) {
-        if (spec.name == "go") {
-            dimensions_.push_back(std::make_unique<GoalOrderingDimension>(*encoder_));
-        } else if (spec.name == "cb") {
-            dimensions_.push_back(std::make_unique<CostBoundDimension>(
-                *encoder_, config.planner.quality_bound, optimal_plan_length_));
-        } else if (spec.name == "ru") {
-            dimensions_.push_back(std::make_unique<ResourceCountDimension>(
-                *encoder_, parse_range_file(spec.arg, "resource")));
-        } else if (spec.name == "uv") {
-            dimensions_.push_back(std::make_unique<UtilityValueDimension>(*encoder_));
-        } else if (spec.name == "fn") {
-            dimensions_.push_back(std::make_unique<FunctionsDimension>(
-                *encoder_, parse_range_file(spec.arg, "function")));
-        } else {
-            throw std::invalid_argument("Unknown dimension: " + spec.name);
-        }
+        const auto& dimension_entry = DimensionRegistry::instance().get(spec.name);
+        dimensions_.push_back(dimension_entry.factory(*encoder_, spec.arg, dimension_context));
     }
 
     // Assemble the solver: planning formula plus dimension constraints.
@@ -57,6 +49,7 @@ BehaviourSpace::BehaviourSpace(const Problem& problem, z3::context& ctx, const C
     solver_->set(solver_params);
 
     Logger::instance().component(VerbosityLevel::INFO, "BehaviourSpace", {
+        {"encoder", encoder_->name()},
         {"formula_length", std::to_string(formula_length)},
         {"dimensions", std::to_string(dimensions_.size())},
         {"dimension_constraints", std::to_string(dimension_constraints)}
@@ -85,7 +78,7 @@ std::optional<DiversePlan> BehaviourSpace::check(const std::vector<z3::expr>& as
     }
 
     z3::model model = solver_->get_model();
-    BoundedSeqEncoder::ExtractedPlan extracted = encoder_->extract_plan(model);
+    Encoder::ExtractedPlan extracted = encoder_->extract_plan(model);
     if (extracted.plan.is_empty()) {
         return std::nullopt;
     }

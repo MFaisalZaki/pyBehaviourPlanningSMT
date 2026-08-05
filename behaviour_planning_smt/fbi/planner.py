@@ -62,7 +62,7 @@ class ForbiddenBehaviorSMTPlanner:
 
         engine_options = {"dims": features}
         for option in (
-            "horizon_length", "horizon_planning_mode", "max_steps",
+            "encoder", "horizon_length", "horizon_planning_mode", "max_steps",
             "oversubscription_horizon", "solver_timeout", "solver_memory",
             "no_action_removal", "verbosity", "stats_file", "executable_path",
         ):

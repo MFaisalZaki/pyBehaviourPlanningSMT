@@ -86,10 +86,18 @@ add_executable(bp_planner
     src/analysis/relaxed_planning_graph.cpp
     src/encoders/z3_variable_factory.cpp
     src/encoders/grounded_encoding_visitor.cpp
-    src/encoders/bounded_seq_encoder.cpp
-    src/bss/dimensions.cpp
+    src/bss/dimension.cpp
     src/bss/behaviour_space.cpp
     src/planners/fbi_planner.cpp
+    # --- Plugins: each file self-registers via a static Plugin object.
+    # Adding a new encoder or dimension = one new file + one line here.
+    src/encoders/seq_encoder.cpp
+    src/bss/dimensions/go.cpp
+    src/bss/dimensions/cb.cpp
+    src/bss/dimensions/ru.cpp
+    src/bss/dimensions/uv.cpp
+    src/bss/dimensions/fn.cpp
+    src/bss/dimensions/action_count.cpp
 )
 
 # Define proto files and generate C++ sources
@@ -114,6 +122,7 @@ target_include_directories(bp_planner PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/encoders
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bss
     ${CMAKE_CURRENT_SOURCE_DIR}/src/planners
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins
     ${Protobuf_INCLUDE_DIRS}
     ${Z3_INCLUDE_DIR}
 )

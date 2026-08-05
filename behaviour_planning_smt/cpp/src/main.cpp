@@ -36,18 +36,20 @@ int write_error_and_exit(const std::string& message, PlanGenerationResult_Status
     auto* log_message = result.add_log_messages();
     log_message->set_level(LogMessage_LogLevel_ERROR);
     log_message->set_message(message);
+    // A written error result is a handled outcome: exit 0 so the frontend
+    // reads the status from the file instead of assuming a crash.
     int rc = write_result(result, output_file);
     google::protobuf::ShutdownProtobufLibrary();
-    return rc == 0 ? 1 : rc;
+    return rc;
 }
 
-std::vector<bp::BoundedSeqEncoder::WeightedGoal>
+std::vector<bp::Encoder::WeightedGoal>
 load_oversubscription_goals(const pb::Problem& pb_problem, const bp::Problem& problem) {
-    std::vector<bp::BoundedSeqEncoder::WeightedGoal> goals;
+    std::vector<bp::Encoder::WeightedGoal> goals;
     for (const auto& metric : pb_problem.metrics()) {
         if (metric.kind() != Metric_MetricKind_OVERSUBSCRIPTION) continue;
         for (const auto& weighted : metric.goals()) {
-            goals.push_back(bp::BoundedSeqEncoder::WeightedGoal{
+            goals.push_back(bp::Encoder::WeightedGoal{
                 bp::Expression(weighted.goal(), &problem), bp::Real(weighted.weight())});
         }
     }
@@ -131,14 +133,6 @@ int main(int argc, char* argv[]) {
                                     std::to_string(oversubscription_goals.size()) +
                                     " weighted goals");
     }
-    for (const auto& spec : config.planner.dimensions) {
-        if (spec.name == "uv" && !is_oversubscription) {
-            return write_error_and_exit(
-                "The 'uv' dimension requires an oversubscription task whose metric assigns a utility per goal.",
-                PlanGenerationResult_Status_UNSUPPORTED_PROBLEM, output_file);
-        }
-    }
-
     // --- Goal reachability check, action pruning, and seed lower bound.
     const size_t total_actions = problem.action_count();
     if (config.global.enable_action_removal) {
@@ -166,10 +160,23 @@ int main(int argc, char* argv[]) {
         bp::Logger::instance().info(message.str());
     }
 
-    // --- Plan.
+    // --- Plan. Encoder and dimension plugins are constructed inside; their
+    // errors (unknown plugin, unsupported encoder, bad argument, task without
+    // the required metric) surface here as a proper result.
     z3::context ctx;
     bp::FBIPlanner planner(problem, ctx, oversubscription_goals);
-    bp::FBIPlanner::Result result = planner.plan();
+    bp::FBIPlanner::Result result;
+    try {
+        result = planner.plan();
+    } catch (const std::invalid_argument& e) {
+        return write_error_and_exit(e.what(),
+                                    PlanGenerationResult_Status_UNSUPPORTED_PROBLEM,
+                                    output_file);
+    } catch (const std::exception& e) {
+        return write_error_and_exit(e.what(),
+                                    PlanGenerationResult_Status_INTERNAL_ERROR,
+                                    output_file);
+    }
 
     bp::Logger::instance().info(
         "Diverse planning finished: " + std::to_string(result.plans.size()) + " plans (" +

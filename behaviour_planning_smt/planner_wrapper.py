@@ -40,7 +40,13 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
             using the same format as the original Python implementation:
             ``['go', {}]``, ``['cb', {'quality-bound': 1.0}]``,
             ``['ru', 'resources-file']``, ``['uv', {}]``, ``['fn', 'functions-file']``.
+            Dimensions are plugins on the C++ side (`bp_planner
+            --list-dimensions`), so names beyond the built-ins pass through:
+            a string additional-info becomes the dimension's argument, e.g.
+            ``['ac', 'navigate']`` for the example action-count plugin.
         num_plans: how many diverse plans to request (default 1).
+        encoder: encoder plugin name (default ``seq``; see
+            `bp_planner --list-encoders`).
         horizon_length: skip the seed search and use this optimal plan length.
         horizon_planning_mode: pin the horizon to the formula's last step.
         max_steps: seed-search horizon cap.
@@ -63,6 +69,7 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
 
         self._dims = options.get("dims", [])
         self._num_plans = int(options.get("num_plans", 1))
+        self._encoder = options.get("encoder")  # None → C++ default ("seq")
         self._horizon_length = options.get("horizon_length")
         self._horizon_planning_mode = options.get("horizon_planning_mode", False)
         self._max_steps = options.get("max_steps")
@@ -211,28 +218,29 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
         return current_problem, CombinedCompilationResult(current_problem, compilation_maps)
 
     def _dimension_arguments(self) -> List[str]:
-        """Translate the dims option into --dim command line arguments."""
+        """Translate the dims option into --dim command line arguments.
+
+        Dimensions are plugins on the C++ side, so any registered name is
+        accepted here and validated by the planner itself (see
+        `bp_planner --list-dimensions`). The additional information becomes the
+        dimension's argument: a plain string is passed as-is, and for the
+        original dict formats the known keys (`quality-bound` for cb, `file`
+        for ru/fn, or a generic `arg`) are unwrapped.
+        """
         arguments: List[str] = []
         for dimension in self._dims:
             name, info = dimension[0], dimension[1] if len(dimension) > 1 else {}
-            if name == "cb":
-                quality_bound = 1.0
-                if isinstance(info, dict):
-                    quality_bound = info.get("quality-bound", 1.0)
-                arguments += ["--dim", f"cb:{quality_bound}"]
-            elif name in ("ru", "fn"):
-                path = info if isinstance(info, str) else (info or {}).get("file")
-                if not path:
-                    raise UPException(
-                        f"The '{name}' dimension needs a file path as its additional information."
-                    )
-                arguments += ["--dim", f"{name}:{path}"]
-            elif name in ("go", "uv"):
-                arguments += ["--dim", name]
-            else:
-                raise UPException(
-                    f"Unknown dimension '{name}'. The C++ core supports: go, cb, ru, uv, fn."
-                )
+            argument = ""
+            if isinstance(info, str):
+                argument = info
+            elif isinstance(info, dict) and info:
+                if name == "cb":
+                    argument = str(info.get("quality-bound", 1.0))
+                else:
+                    value = info.get("file", info.get("arg"))
+                    if value is not None:
+                        argument = str(value)
+            arguments += ["--dim", f"{name}:{argument}" if argument else name]
         return arguments
 
     # ------------------------------------------------------------------
@@ -291,6 +299,8 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
                 "--num-plans", str(num_plans),
             ]
             command += self._dimension_arguments()
+            if self._encoder is not None:
+                command += ["--encoder", self._encoder]
             if self._horizon_length is not None:
                 command += ["--horizon-length", str(self._horizon_length)]
             if self._horizon_planning_mode:

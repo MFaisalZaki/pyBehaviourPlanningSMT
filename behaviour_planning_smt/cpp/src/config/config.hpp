@@ -40,7 +40,8 @@ public:
 
     struct Planner {
         int num_plans = 1;                       // how many diverse plans to generate
-        std::vector<DimensionSpec> dimensions;   // behaviour-space dimensions, in order
+        std::string encoder = "seq";             // encoder plugin name
+        std::vector<DimensionSpec> dimensions;   // behaviour-space dimension plugins, in order
         double quality_bound = 1.0;              // derived from the 'cb' dimension argument
         int horizon_length = -1;                 // -1: infer the optimal length with a seed search
         bool horizon_planning_mode = false;      // pin the horizon to the formula's last step

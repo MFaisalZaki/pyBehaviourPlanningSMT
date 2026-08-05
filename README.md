@@ -93,7 +93,7 @@ The `bp_planner` executable can equally be driven directly — run
 grounded problem serialized with unified-planning's protobuf writer.
 
 ## Behaviour space dimensions
-Each dimension is a `[name, additional-info]` pair. The supported names are:
+Each dimension is a `[name, additional-info]` pair. The built-in dimensions are:
 
 | Name | Feature | Additional info |
 | ---- | ------- | --------------- |
@@ -102,12 +102,35 @@ Each dimension is a `[name, additional-info]` pair. The supported names are:
 | `ru` | Resource usage count | path to a resources file |
 | `uv` | Utility value | `{}`, requires an oversubscription task |
 | `fn` | Numeric function values | path to a functions file |
+| `ac` | Action count (example plugin) | an action-name fragment, e.g. `'navigate'` |
 
-The list is open, but a dimension is now a small C++ class implementing the
-two-method contract in `behaviour_planning_smt/cpp/src/bss/dimension.hpp`
-(constraints + behaviour evaluation), registered in the behaviour space and the
-CLI. [tutorials/06_custom_dimension.py](tutorials/06_custom_dimension.py) walks
-through one.
+Dimensions and encoders are plugins, in the style of Fast Downward's plugin
+system: each lives in its own file, registers itself under a name during
+static initialization, and is requested by that name. `bp_planner
+--list-dimensions` and `bp_planner --list-encoders` show what a build
+registered, and unknown names fail with the registered list. The Python
+wrapper passes dimension names through untouched, so a new C++ dimension is
+usable from Python without editing the wrapper — a string additional-info
+becomes the dimension's argument (that is how `['ac', 'navigate']` works).
+
+## Writing your own dimension or encoder
+A dimension is a small C++ class implementing the two-method contract in
+`behaviour_planning_smt/cpp/src/bss/dimension.hpp` — constraints in the
+constructor, behaviour evaluation from a model — plus a `DimensionPlugin`
+registrar. Drop the file into `cpp/src/bss/dimensions/`, add it to
+`cpp/CMakeLists.txt`, rebuild: nothing else needs editing. The bundled
+[`action_count.cpp`](behaviour_planning_smt/cpp/src/bss/dimensions/action_count.cpp)
+is the template, and
+[tutorials/06_custom_dimension.py](tutorials/06_custom_dimension.py) walks
+through it.
+
+Encoders follow the same pattern with `EncoderPlugin` against the interface in
+`cpp/src/encoders/encoder.hpp`; the bounded sequential encoding ships as the
+`seq` plugin, selected with `--encoder` (or the `encoder` option in Python).
+A dimension is responsible for knowing which encoders it supports: it reads
+the active encoder's name and places its encodings accordingly, rejecting
+encoders it was never taught (see `Dimension::require_encoder` and the
+per-encoder branch in the `cb` dimension).
 
 The `cb` dimension is special: its `quality-bound` also scales the encoded
 formula length, which is `optimal-plan-length * quality-bound`. When `cb` is
@@ -148,6 +171,7 @@ core:
 
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
+| `encoder` | `seq` | Encoder plugin to use (`bp_planner --list-encoders`). |
 | `horizon_length` | `None` | Skip the seed search and use this value as the optimal plan length. It is still scaled by `cb`'s quality bound to give the formula length. |
 | `horizon_planning_mode` | `False` | Pin the horizon to the formula's last step instead of binding it to the first step at which the goal holds, so plans are read from the whole formula rather than truncated at the goal. |
 | `max_steps` | `500` | Horizon cap for the seed search. |

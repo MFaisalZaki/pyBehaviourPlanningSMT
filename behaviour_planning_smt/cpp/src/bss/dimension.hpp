@@ -1,8 +1,11 @@
 #pragma once
 
-#include "../encoders/bounded_seq_encoder.hpp"
+#include "../encoders/encoder.hpp"
+#include "../plugins/plugin.hpp"
 #include <z3++.h>
 
+#include <functional>
+#include <initializer_list>
 #include <memory>
 #include <optional>
 #include <string>
@@ -16,8 +19,17 @@ namespace bp {
  * A dimension contributes constraints to the planning formula (its `formula()`)
  * and, given a model, evaluates to the behaviour of the found plan along this
  * dimension: a Z3 expression pinning the dimension's variables to their model
- * values plus a printable value. This is the C++ counterpart of the Python
- * DimensionConstructorSMT contract (__encode__ / expr).
+ * values plus a printable value.
+ *
+ * Dimensions are plugins (see plugins/plugin.hpp): each implementation lives
+ * in its own file under bss/dimensions/, registers itself under a short name,
+ * and is requested from the command line with --dim NAME[:ARG].
+ *
+ * A dimension is handed the active encoder and is responsible for knowing
+ * which encoders it can encode itself for: query encoder.name() and place the
+ * encodings accordingly, and reject unsupported encoders with
+ * require_encoder() so the user gets a clear error instead of silently wrong
+ * constraints.
  */
 class Dimension {
 public:
@@ -35,44 +47,31 @@ public:
     virtual BehaviourValue evaluate(const z3::model& model) const = 0;
 
 protected:
+    /**
+     * Guard for encoder support: throws std::invalid_argument when the active
+     * encoder is not among `supported`, naming both sides. Call it first in a
+     * dimension constructor — or branch on encoder.name() directly when the
+     * dimension places different encodings for different encoders.
+     */
+    static void require_encoder(const Encoder& encoder, const std::string& dimension_name,
+                                std::initializer_list<const char*> supported);
+
     std::string name_;
     std::vector<z3::expr> formula_;
 };
 
 /**
- * @brief Goal predicate ordering ('go').
- *
- * Each goal conjunct gets an integer landmark variable holding the first state
- * layer at which the conjunct becomes true (-100 when it never does). Pairwise
- * orderings of those landmarks, reified through an uninterpreted function into
- * 0/1 integers, form the behaviour.
+ * @brief Planner-level values a dimension may need besides the encoder.
  */
-class GoalOrderingDimension : public Dimension {
-public:
-    explicit GoalOrderingDimension(const BoundedSeqEncoder& encoder);
-    BehaviourValue evaluate(const z3::model& model) const override;
-
-private:
-    std::vector<z3::expr> ordering_vars_;
+struct DimensionContext {
+    int optimal_plan_length = 0;
+    double quality_bound = 1.0;
 };
 
-/**
- * @brief Makespan-optimal cost bound ('cb').
- *
- * Counts the number of non-empty steps as the plan cost. For regular tasks the
- * cost is bounded below by the optimal plan length; for oversubscription tasks
- * it is instead capped by quality_bound * optimal_plan_length, which also caps
- * the horizon and disables all later steps.
- */
-class CostBoundDimension : public Dimension {
-public:
-    CostBoundDimension(const BoundedSeqEncoder& encoder, double quality_bound,
-                       int optimal_plan_length);
-    BehaviourValue evaluate(const z3::model& model) const override;
-
-private:
-    std::optional<z3::expr> cost_var_;
-};
+using DimensionFactory = std::function<std::unique_ptr<Dimension>(
+    const Encoder& encoder, const std::string& argument, const DimensionContext& context)>;
+using DimensionRegistry = PluginRegistry<DimensionFactory>;
+using DimensionPlugin = Plugin<DimensionFactory>;
 
 /// One entry of a resources/functions file: (:resource NAME MIN MAX DELTA).
 struct RangeEntry {
@@ -80,53 +79,6 @@ struct RangeEntry {
     long min = 0;
     long max = 0;
     long delta = 0;
-};
-
-/**
- * @brief Resource usage count ('ru').
- *
- * A resource is used when any grounded action whose name contains the resource
- * name appears in the plan; the behaviour is the number of used resources.
- */
-class ResourceCountDimension : public Dimension {
-public:
-    ResourceCountDimension(const BoundedSeqEncoder& encoder,
-                           const std::vector<RangeEntry>& resources);
-    BehaviourValue evaluate(const z3::model& model) const override;
-
-private:
-    std::optional<z3::expr> count_var_;
-};
-
-/**
- * @brief Utility value ('uv').
- *
- * Requires an oversubscription task: sums the weights of the metric goals that
- * hold in the final state and requires the total to be positive.
- */
-class UtilityValueDimension : public Dimension {
-public:
-    explicit UtilityValueDimension(const BoundedSeqEncoder& encoder);
-    BehaviourValue evaluate(const z3::model& model) const override;
-
-private:
-    std::optional<z3::expr> utility_var_;
-};
-
-/**
- * @brief Numeric function values ('fn').
- *
- * Slices the final-state value of each listed numeric fluent into boxes of
- * width delta; the box index a plan ends in is its behaviour along that fluent.
- */
-class FunctionsDimension : public Dimension {
-public:
-    FunctionsDimension(const BoundedSeqEncoder& encoder,
-                       const std::vector<RangeEntry>& functions);
-    BehaviourValue evaluate(const z3::model& model) const override;
-
-private:
-    std::vector<std::pair<std::string, z3::expr>> function_vars_;
 };
 
 /**

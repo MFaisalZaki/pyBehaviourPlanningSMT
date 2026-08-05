@@ -3,6 +3,7 @@
 #include "../encoders/z3_variable_factory.hpp"
 #include "../util/logger.hpp"
 #include "../util/stats.hpp"
+#include "../util/z3_utils.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -11,20 +12,6 @@
 namespace bp {
 
 namespace {
-
-z3::expr mk_or_vec(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    if (exprs.empty()) return ctx.bool_val(false);
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    return z3::mk_or(vec);
-}
-
-z3::expr mk_and_vec(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    if (exprs.empty()) return ctx.bool_val(true);
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    return z3::mk_and(vec);
-}
 
 double seconds_since(const std::chrono::high_resolution_clock::time_point& start) {
     return std::chrono::duration<double>(
@@ -44,7 +31,7 @@ std::string plan_key(const DiversePlan& plan) {
 } // namespace
 
 FBIPlanner::FBIPlanner(const Problem& problem, z3::context& ctx,
-                       std::vector<BoundedSeqEncoder::WeightedGoal> oversubscription_goals)
+                       std::vector<Encoder::WeightedGoal> oversubscription_goals)
     : problem_(problem), ctx_(ctx),
       oversubscription_goals_(std::move(oversubscription_goals)) {}
 
@@ -219,8 +206,10 @@ std::optional<int> FBIPlanner::seed_oversubscription() {
     Logger::instance().info("[Seed] Oversubscription seed over " + std::to_string(bound) +
                             " steps (utility max, then plan length min)");
 
-    BoundedSeqEncoder seed_encoder(problem_, ctx_, bound, /*horizon_planning=*/false,
-                                   oversubscription_goals_, /*seed_mode=*/true);
+    const auto& encoder_entry = EncoderRegistry::instance().get(config.planner.encoder);
+    std::unique_ptr<Encoder> seed_encoder = encoder_entry.factory(EncoderContext{
+        problem_, ctx_, bound, /*horizon_planning=*/false,
+        oversubscription_goals_, /*seed_mode=*/true});
 
     z3::solver solver(ctx_);
     z3::params solver_params(ctx_);
@@ -228,13 +217,13 @@ std::optional<int> FBIPlanner::seed_oversubscription() {
     solver_params.set("max_memory", static_cast<unsigned>(config.planner.solver_memory_mb));
     solver.set(solver_params);
 
-    for (const auto& assertion : seed_encoder.assertions()) {
+    for (const auto& assertion : seed_encoder->assertions()) {
         solver.add(assertion);
     }
 
     // total utility collected in the final state
     std::vector<z3::expr> utility_terms;
-    for (const auto& goal : seed_encoder.utility_goals()) {
+    for (const auto& goal : seed_encoder->utility_goals()) {
         z3::expr weight = goal.weight.denominator() == 1
                               ? ctx_.int_val(static_cast<int64_t>(goal.weight.numerator()))
                               : ctx_.real_val(static_cast<int64_t>(goal.weight.numerator()),
@@ -248,8 +237,8 @@ std::optional<int> FBIPlanner::seed_oversubscription() {
 
     // number of non-empty steps (front-loaded, so this is the plan length)
     std::vector<z3::expr> step_costs;
-    for (int t = 0; t < seed_encoder.size(); ++t) {
-        step_costs.push_back(z3::ite(mk_or_vec(ctx_, seed_encoder.action_vars_at(t)),
+    for (int t = 0; t < seed_encoder->size(); ++t) {
+        step_costs.push_back(z3::ite(mk_or_vec(ctx_, seed_encoder->action_vars_at(t)),
                                      ctx_.int_val(1), ctx_.int_val(0)));
     }
     z3::expr_vector cost_vec(ctx_);

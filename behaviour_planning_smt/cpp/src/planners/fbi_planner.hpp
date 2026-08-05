@@ -37,14 +37,14 @@ public:
     };
 
     FBIPlanner(const Problem& problem, z3::context& ctx,
-               std::vector<BoundedSeqEncoder::WeightedGoal> oversubscription_goals);
+               std::vector<Encoder::WeightedGoal> oversubscription_goals);
 
     Result plan();
 
 private:
     const Problem& problem_;
     z3::context& ctx_;
-    std::vector<BoundedSeqEncoder::WeightedGoal> oversubscription_goals_;
+    std::vector<Encoder::WeightedGoal> oversubscription_goals_;
 
     // Seed searches for the optimal plan length. Return nullopt when no plan
     // is found within the configured bounds.

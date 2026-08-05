@@ -23,7 +23,7 @@ encoded, and reports its progress on stdout.
 | [03_resource_usage.py](03_resource_usage.py) | The `ru` dimension and the resources file. |
 | [04_oversubscription_utility.py](04_oversubscription_utility.py) | The `uv` dimension, and turning a classical task into an oversubscription one. |
 | [05_planner_options.py](05_planner_options.py) | Controlling the horizon: `horizon_length`, `horizon_planning_mode` and the solver budgets. |
-| [06_custom_dimension.py](06_custom_dimension.py) | Writing a dimension of your own in the C++ core. |
+| [06_custom_dimension.py](06_custom_dimension.py) | The plugin system: dissecting the bundled `ac` example plugin and writing a dimension of your own. |
 
 ## The bundled tasks
 

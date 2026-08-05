@@ -1,9 +1,11 @@
-#include "bounded_seq_encoder.hpp"
+#include "seq_encoder.hpp"
 #include "../util/logger.hpp"
 #include "../util/stats.hpp"
+#include "../util/z3_utils.hpp"
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <sstream>
 
 namespace bp {
@@ -26,43 +28,16 @@ std::string sanitize_label(const std::string& raw) {
     return label;
 }
 
-z3::expr mk_or_vec(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    if (exprs.empty()) return ctx.bool_val(false);
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    return z3::mk_or(vec);
-}
-
-z3::expr mk_and_vec(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    if (exprs.empty()) return ctx.bool_val(true);
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    return z3::mk_and(vec);
-}
-
-z3::expr exactly_one(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    std::vector<int> coeffs(exprs.size(), 1);
-    return z3::pbeq(vec, coeffs.data(), 1);
-}
-
-z3::expr at_most_one(z3::context& ctx, const std::vector<z3::expr>& exprs) {
-    z3::expr_vector vec(ctx);
-    for (const auto& e : exprs) vec.push_back(e);
-    return z3::atmost(vec, 1);
-}
-
 } // namespace
 
-BoundedSeqEncoder::BoundedSeqEncoder(const Problem& problem, z3::context& ctx,
-                                     int formula_length, bool horizon_planning,
-                                     std::vector<WeightedGoal> oversubscription_goals,
-                                     bool seed_mode)
-    : problem_(problem), ctx_(ctx), formula_length_(formula_length),
-      horizon_planning_(horizon_planning),
-      oversubscription_goals_(std::move(oversubscription_goals)), seed_mode_(seed_mode),
-      variable_factory_(ctx), grounded_visitor_(ctx, &problem, &variable_factory_) {
+SeqEncoder::SeqEncoder(const EncoderContext& context)
+    : problem_(context.problem), ctx_(context.ctx),
+      formula_length_(context.formula_length),
+      horizon_planning_(context.horizon_planning),
+      oversubscription_goals_(context.oversubscription_goals),
+      seed_mode_(context.seed_mode),
+      variable_factory_(context.ctx),
+      grounded_visitor_(context.ctx, &context.problem, &variable_factory_) {
     build_epc_index();
     for (const Expression& fluent : problem_.grounded_fluents()) {
         grounded_fluent_by_name_[grounded_fluent_name(fluent)] = &fluent;
@@ -70,7 +45,7 @@ BoundedSeqEncoder::BoundedSeqEncoder(const Problem& problem, z3::context& ctx,
     build();
 }
 
-std::optional<z3::expr> BoundedSeqEncoder::convert(const Expression& expr, int timestep) const {
+std::optional<z3::expr> SeqEncoder::convert(const Expression& expr, int timestep) const {
     grounded_visitor_.clear();
     if (timestep >= 0) {
         grounded_visitor_.set_timestep(timestep);
@@ -82,7 +57,7 @@ std::optional<z3::expr> BoundedSeqEncoder::convert(const Expression& expr, int t
     return grounded_visitor_.get_result();
 }
 
-std::optional<z3::expr> BoundedSeqEncoder::convert_effect(const EffectExpression& effect,
+std::optional<z3::expr> SeqEncoder::convert_effect(const EffectExpression& effect,
                                                           int timestep) const {
     auto fluent_curr = convert(effect.fluent(), timestep);
     auto fluent_next = convert(effect.fluent(), timestep + 1);
@@ -114,7 +89,7 @@ std::optional<z3::expr> BoundedSeqEncoder::convert_effect(const EffectExpression
     return constraint;
 }
 
-void BoundedSeqEncoder::build_epc_index() {
+void SeqEncoder::build_epc_index() {
     epc_index_.clear();
     for (const Expression& fluent : problem_.grounded_fluents()) {
         epc_index_[fluent];
@@ -127,7 +102,7 @@ void BoundedSeqEncoder::build_epc_index() {
     }
 }
 
-std::vector<z3::expr> BoundedSeqEncoder::action_vars_at(int t) const {
+std::vector<z3::expr> SeqEncoder::action_vars_at(int t) const {
     std::vector<z3::expr> vars;
     vars.reserve(problem_.action_count());
     for (const Action& action : problem_.actions()) {
@@ -136,11 +111,11 @@ std::vector<z3::expr> BoundedSeqEncoder::action_vars_at(int t) const {
     return vars;
 }
 
-std::string BoundedSeqEncoder::grounded_action_name(const Action& action) const {
+std::string SeqEncoder::grounded_action_name(const Action& action) const {
     return variable_factory_.get_action_var_name(action);
 }
 
-std::vector<z3::expr> BoundedSeqEncoder::action_vars_matching(const std::string& substring) const {
+std::vector<z3::expr> SeqEncoder::action_vars_matching(const std::string& substring) const {
     std::vector<z3::expr> vars;
     for (const Action& action : problem_.actions()) {
         if (grounded_action_name(action).find(substring) == std::string::npos) continue;
@@ -151,7 +126,7 @@ std::vector<z3::expr> BoundedSeqEncoder::action_vars_matching(const std::string&
     return vars;
 }
 
-std::string BoundedSeqEncoder::grounded_fluent_name(const Expression& fluent_expr) const {
+std::string SeqEncoder::grounded_fluent_name(const Expression& fluent_expr) const {
     // A grounded fluent expression is a state variable: fluent symbol followed
     // by constant arguments. Reproduce the variable factory's naming scheme
     // (name and parameters joined by '_', no timestep suffix).
@@ -169,14 +144,14 @@ std::string BoundedSeqEncoder::grounded_fluent_name(const Expression& fluent_exp
     return name;
 }
 
-std::optional<z3::expr> BoundedSeqEncoder::fluent_var_at_last_state(
+std::optional<z3::expr> SeqEncoder::fluent_var_at_last_state(
         const std::string& grounded_name) const {
     auto it = grounded_fluent_by_name_.find(grounded_name);
     if (it == grounded_fluent_by_name_.end()) return std::nullopt;
     return convert(*it->second, formula_length_);
 }
 
-void BoundedSeqEncoder::build() {
+void SeqEncoder::build() {
     auto& stats = Stats::instance();
     const int N = formula_length_;
     assertions_.clear();
@@ -387,7 +362,7 @@ void BoundedSeqEncoder::build() {
     });
 }
 
-BoundedSeqEncoder::ExtractedPlan BoundedSeqEncoder::extract_plan(const z3::model& model) const {
+SeqEncoder::ExtractedPlan SeqEncoder::extract_plan(const z3::model& model) const {
     ExtractedPlan extracted;
     z3::expr horizon_value = model.eval(*horizon_expr_, true);
     extracted.horizon = horizon_value.get_numeral_int();
@@ -404,5 +379,14 @@ BoundedSeqEncoder::ExtractedPlan BoundedSeqEncoder::extract_plan(const z3::model
     }
     return extracted;
 }
+
+// Self-registration: makes "seq" addressable via --encoder.
+static EncoderPlugin _seq_encoder_plugin(
+    "seq",
+    [](const EncoderContext& context) -> std::unique_ptr<Encoder> {
+        return std::make_unique<SeqEncoder>(context);
+    },
+    "bounded sequential encoding with a first-goal-state horizon variable "
+    "(one action per step)");
 
 } // namespace bp
