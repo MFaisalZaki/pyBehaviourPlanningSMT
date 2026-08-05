@@ -47,6 +47,10 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
         num_plans: how many diverse plans to request (default 1).
         encoder: encoder plugin name (default ``seq``; see
             `bp_planner --list-encoders`).
+        indicator: diversity-indicator plugin name, the optimisation metric of
+            the diversification (default ``bdc``, behaviour diversity count;
+            see `bp_planner --list-indicators`). ``name:arg`` passes an
+            argument to parameterized indicators.
         horizon_length: skip the seed search and use this optimal plan length.
         horizon_planning_mode: pin the horizon to the formula's last step.
         max_steps: seed-search horizon cap.
@@ -70,6 +74,7 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
         self._dims = options.get("dims", [])
         self._num_plans = int(options.get("num_plans", 1))
         self._encoder = options.get("encoder")  # None → C++ default ("seq")
+        self._indicator = options.get("indicator")  # None → C++ default ("bdc")
         self._horizon_length = options.get("horizon_length")
         self._horizon_planning_mode = options.get("horizon_planning_mode", False)
         self._max_steps = options.get("max_steps")
@@ -301,6 +306,8 @@ class BehaviourPlanningSMTPlanner(Engine, AnytimePlannerMixin, OneshotPlannerMix
             command += self._dimension_arguments()
             if self._encoder is not None:
                 command += ["--encoder", self._encoder]
+            if self._indicator is not None:
+                command += ["--indicator", self._indicator]
             if self._horizon_length is not None:
                 command += ["--horizon-length", str(self._horizon_length)]
             if self._horizon_planning_mode:

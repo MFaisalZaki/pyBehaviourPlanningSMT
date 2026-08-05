@@ -48,6 +48,11 @@ public:
         return {*utility_var_ == utility_value, utility_value.get_decimal_string(0)};
     }
 
+    // Counts compare by absolute difference.
+    double distance(const std::string& a, const std::string& b) const override {
+        return numeric_distance(a, b);
+    }
+
 private:
     std::optional<z3::expr> utility_var_;
 };

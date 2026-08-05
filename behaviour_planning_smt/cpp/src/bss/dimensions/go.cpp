@@ -84,6 +84,17 @@ public:
         return {mk_and_vec(ctx, pinned), value};
     }
 
+    // Hamming distance over the ordering vector: how many pairwise goal
+    // orderings the two plans disagree on.
+    double distance(const std::string& a, const std::string& b) const override {
+        const size_t shared = std::min(a.size(), b.size());
+        double differing = static_cast<double>(a.size() - shared + b.size() - shared);
+        for (size_t i = 0; i < shared; ++i) {
+            if (a[i] != b[i]) differing += 1.0;
+        }
+        return differing;
+    }
+
 private:
     std::vector<z3::expr> ordering_vars_;
 };

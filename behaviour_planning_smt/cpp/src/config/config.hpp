@@ -41,6 +41,8 @@ public:
     struct Planner {
         int num_plans = 1;                       // how many diverse plans to generate
         std::string encoder = "seq";             // encoder plugin name
+        std::string indicator = "bdc";           // diversity-indicator plugin name
+        std::string indicator_arg = "";          // its optional argument
         std::vector<DimensionSpec> dimensions;   // behaviour-space dimension plugins, in order
         double quality_bound = 1.0;              // derived from the 'cb' dimension argument
         int horizon_length = -1;                 // -1: infer the optimal length with a seed search

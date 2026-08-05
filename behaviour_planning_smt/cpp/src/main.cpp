@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -54,6 +55,13 @@ load_oversubscription_goals(const pb::Problem& pb_problem, const bp::Problem& pr
         }
     }
     return goals;
+}
+
+// Distances render with up to six significant digits, without trailing zeros.
+std::string format_distance(double value) {
+    char buffer[32];
+    std::snprintf(buffer, sizeof(buffer), "%.6g", value);
+    return buffer;
 }
 
 // A compact one-line behaviour summary: "go=011 cb=7".
@@ -191,6 +199,7 @@ int main(int argc, char* argv[]) {
                            : PlanGenerationResult_Status_SOLVED_SATISFICING);
     auto& metrics = *overall.mutable_metrics();
     metrics["num_plans"] = std::to_string(result.plans.size());
+    metrics["indicator"] = result.indicator;
     metrics["new_behaviour_count"] = std::to_string(result.new_behaviour_count);
     metrics["optimal_plan_length"] = std::to_string(result.optimal_plan_length);
     metrics["formula_length"] = std::to_string(result.formula_length);
@@ -198,6 +207,17 @@ int main(int argc, char* argv[]) {
     metrics["diversify_seconds"] = std::to_string(result.diversify_seconds);
     metrics["memory_mb"] =
         std::to_string(bp::MemoryTracker::instance().get_current_memory_mb());
+
+    // Pairwise behaviour distances of the plan set: the sum over the
+    // dimensions of the per-dimension distance between the two plans' values.
+    for (const auto& pair : result.pairwise_distances) {
+        metrics["behaviour_distance." + std::to_string(pair.first_plan) + "." +
+                std::to_string(pair.second_plan)] = format_distance(pair.distance);
+    }
+    if (result.min_behaviour_distance >= 0) {
+        metrics["behaviour_distance.min"] = format_distance(result.min_behaviour_distance);
+        metrics["behaviour_distance.avg"] = format_distance(result.avg_behaviour_distance);
+    }
     if (!result.plans.empty()) {
         *overall.mutable_plan() = result.plans.front().plan.to_protobuf();
     }

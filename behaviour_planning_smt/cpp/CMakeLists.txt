@@ -98,6 +98,7 @@ add_executable(bp_planner
     src/bss/dimensions/uv.cpp
     src/bss/dimensions/fn.cpp
     src/bss/dimensions/action_count.cpp
+    src/bss/indicators/behaviour_diversity_count.cpp
 )
 
 # Define proto files and generate C++ sources

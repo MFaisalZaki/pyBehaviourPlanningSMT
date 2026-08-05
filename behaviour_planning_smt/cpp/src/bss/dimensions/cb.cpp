@@ -39,6 +39,11 @@ public:
         return {*cost_var_ == cost_value, cost_value.get_decimal_string(0)};
     }
 
+    // Counts compare by absolute difference.
+    double distance(const std::string& a, const std::string& b) const override {
+        return numeric_distance(a, b);
+    }
+
 private:
     void encode_for_seq(const Encoder& encoder, double quality_bound, int optimal_plan_length) {
         z3::context& ctx = encoder.ctx();

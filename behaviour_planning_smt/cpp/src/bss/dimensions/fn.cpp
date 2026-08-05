@@ -1,6 +1,9 @@
 #include "../dimension.hpp"
 #include "../../util/z3_utils.hpp"
 
+#include <cmath>
+#include <map>
+
 namespace bp {
 
 namespace {
@@ -62,6 +65,41 @@ public:
             value += fluent_name + "=" + box_value.get_decimal_string(0);
         }
         return {mk_and_vec(ctx, pinned), value};
+    }
+
+    // Sum over the tracked fluents of how many boxes apart the two plans end;
+    // a fluent present on only one side counts as one box of difference.
+    double distance(const std::string& a, const std::string& b) const override {
+        auto parse = [](const std::string& value) {
+            std::map<std::string, double> boxes;
+            size_t start = 0;
+            while (start < value.size()) {
+                size_t end = value.find(';', start);
+                if (end == std::string::npos) end = value.size();
+                const std::string entry = value.substr(start, end - start);
+                size_t equals = entry.rfind('=');
+                if (equals != std::string::npos) {
+                    try {
+                        boxes[entry.substr(0, equals)] = std::stod(entry.substr(equals + 1));
+                    } catch (const std::exception&) {
+                        // malformed entry: ignore it rather than fail the distance
+                    }
+                }
+                start = end + 1;
+            }
+            return boxes;
+        };
+        const auto boxes_a = parse(a);
+        const auto boxes_b = parse(b);
+        double total = 0.0;
+        for (const auto& [fluent_name, box_a] : boxes_a) {
+            auto it = boxes_b.find(fluent_name);
+            total += it != boxes_b.end() ? std::fabs(box_a - it->second) : 1.0;
+        }
+        for (const auto& [fluent_name, _] : boxes_b) {
+            if (!boxes_a.count(fluent_name)) total += 1.0;
+        }
+        return total;
     }
 
 private:

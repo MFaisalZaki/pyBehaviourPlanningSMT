@@ -27,6 +27,13 @@ class BehaviourSpaceInfo:
         self.new_behaviour_count: Optional[int] = None
         self.seed_seconds: Optional[float] = None
         self.diversify_seconds: Optional[float] = None
+        self.indicator: Optional[str] = None
+        # Pairwise behaviour distances of the returned plan set, keyed by the
+        # (i, j) plan indices; the sum over the dimensions of each dimension's
+        # distance between the two plans' values.
+        self.pairwise_behaviour_distances: dict = {}
+        self.min_behaviour_distance: Optional[float] = None
+        self.avg_behaviour_distance: Optional[float] = None
 
     def update_from_metrics(self, metrics: dict):
         def to_int(key):
@@ -40,6 +47,21 @@ class BehaviourSpaceInfo:
         self.new_behaviour_count = to_int("new_behaviour_count")
         self.seed_seconds = to_float("seed_seconds")
         self.diversify_seconds = to_float("diversify_seconds")
+        self.indicator = metrics.get("indicator")
+        self.min_behaviour_distance = to_float("behaviour_distance.min")
+        self.avg_behaviour_distance = to_float("behaviour_distance.avg")
+        self.pairwise_behaviour_distances = {}
+        for key, value in metrics.items():
+            if not key.startswith("behaviour_distance."):
+                continue
+            suffix = key[len("behaviour_distance."):]
+            if suffix in ("min", "avg"):
+                continue
+            first, _, second = suffix.partition(".")
+            try:
+                self.pairwise_behaviour_distances[(int(first), int(second))] = float(value)
+            except ValueError:
+                pass
 
 
 class ForbiddenBehaviorSMTPlanner:
@@ -62,9 +84,10 @@ class ForbiddenBehaviorSMTPlanner:
 
         engine_options = {"dims": features}
         for option in (
-            "encoder", "horizon_length", "horizon_planning_mode", "max_steps",
-            "oversubscription_horizon", "solver_timeout", "solver_memory",
-            "no_action_removal", "verbosity", "stats_file", "executable_path",
+            "encoder", "indicator", "horizon_length", "horizon_planning_mode",
+            "max_steps", "oversubscription_horizon", "solver_timeout",
+            "solver_memory", "no_action_removal", "verbosity", "stats_file",
+            "executable_path",
         ):
             if option in self.args and self.args[option] is not None:
                 engine_options[option] = self.args[option]

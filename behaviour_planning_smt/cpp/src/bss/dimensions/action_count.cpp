@@ -53,6 +53,11 @@ public:
         return {*count_var_ == count_value, count_value.get_decimal_string(0)};
     }
 
+    // Counts compare by absolute difference.
+    double distance(const std::string& a, const std::string& b) const override {
+        return numeric_distance(a, b);
+    }
+
 private:
     std::optional<z3::expr> count_var_;
 };

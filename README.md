@@ -104,25 +104,56 @@ Each dimension is a `[name, additional-info]` pair. The built-in dimensions are:
 | `fn` | Numeric function values | path to a functions file |
 | `ac` | Action count (example plugin) | an action-name fragment, e.g. `'navigate'` |
 
-Dimensions and encoders are plugins, in the style of Fast Downward's plugin
-system: each lives in its own file, registers itself under a name during
-static initialization, and is requested by that name. `bp_planner
---list-dimensions` and `bp_planner --list-encoders` show what a build
-registered, and unknown names fail with the registered list. The Python
-wrapper passes dimension names through untouched, so a new C++ dimension is
-usable from Python without editing the wrapper — a string additional-info
-becomes the dimension's argument (that is how `['ac', 'navigate']` works).
+Dimensions, encoders and diversity indicators are plugins, in the style of
+Fast Downward's plugin system: each lives in its own file, registers itself
+under a name during static initialization, and is requested by that name.
+`bp_planner --list-dimensions`, `--list-encoders` and `--list-indicators`
+show what a build registered, and unknown names fail with the registered
+list. The Python wrapper passes dimension names through untouched, so a new
+C++ dimension is usable from Python without editing the wrapper — a string
+additional-info becomes the dimension's argument (that is how
+`['ac', 'navigate']` works).
 
-## Writing your own dimension or encoder
-A dimension is a small C++ class implementing the two-method contract in
+Every dimension also defines a **distance function** between two of its
+values: the discrete metric by default, overridden with a semantic distance
+by the built-ins — absolute difference for the count-valued dimensions
+(`cb`, `ru`, `uv`, `ac`), Hamming distance over the ordering vector for
+`go`, and per-fluent box differences for `fn`. After a run the planner
+scores the returned plan set with them: the overall result's metrics carry
+`behaviour_distance.<i>.<j>` for every plan pair (the sum of the
+per-dimension distances) plus `behaviour_distance.min`/`.avg`, and the
+Python API exposes them as `planner.behaviour_space.pairwise_behaviour_distances`,
+`.min_behaviour_distance` and `.avg_behaviour_distance`.
+
+## Diversity indicators
+The diversification strategy itself is a plugin category: a **diversity
+indicator** is the optimisation metric the planner maximises over the
+behaviour space. The default and currently only indicator is **`bdc`
+(behaviour diversity count)**: it maximises the number of distinct behaviours
+by forbidding every behaviour found and generating another one, then fills
+the remaining quota with plans that reuse known behaviours but differ from
+every known plan. Select it explicitly with `--indicator bdc` (or
+`indicator='bdc'` in Python); parameterized indicators take
+`--indicator name:arg`. Further indicators — for instance ones maximising
+pairwise behaviour distance — implement the interface in
+`cpp/src/bss/diversity_indicator.hpp`, use the dimensions' distance
+functions via `space.dimensions()`, and register with a
+`DiversityIndicatorPlugin` in a file under `cpp/src/bss/indicators/`.
+
+## Writing your own dimension, encoder or indicator
+A dimension is a small C++ class implementing the contract in
 `behaviour_planning_smt/cpp/src/bss/dimension.hpp` — constraints in the
-constructor, behaviour evaluation from a model — plus a `DimensionPlugin`
+constructor, behaviour evaluation from a model, and optionally a `distance`
+override (the default is the discrete metric) — plus a `DimensionPlugin`
 registrar. Drop the file into `cpp/src/bss/dimensions/`, add it to
 `cpp/CMakeLists.txt`, rebuild: nothing else needs editing. The bundled
 [`action_count.cpp`](behaviour_planning_smt/cpp/src/bss/dimensions/action_count.cpp)
 is the template, and
 [tutorials/06_custom_dimension.py](tutorials/06_custom_dimension.py) walks
-through it.
+through it. Diversity indicators extend the same way under
+`cpp/src/bss/indicators/`, with
+[`behaviour_diversity_count.cpp`](behaviour_planning_smt/cpp/src/bss/indicators/behaviour_diversity_count.cpp)
+as the template.
 
 Encoders follow the same pattern with `EncoderPlugin` against the interface in
 `cpp/src/encoders/encoder.hpp`; the bounded sequential encoding ships as the
@@ -172,6 +203,7 @@ core:
 | Option | Default | Meaning |
 | ------ | ------- | ------- |
 | `encoder` | `seq` | Encoder plugin to use (`bp_planner --list-encoders`). |
+| `indicator` | `bdc` | Diversity-indicator plugin, the optimisation metric of the diversification (`bp_planner --list-indicators`). |
 | `horizon_length` | `None` | Skip the seed search and use this value as the optimal plan length. It is still scaled by `cb`'s quality bound to give the formula length. |
 | `horizon_planning_mode` | `False` | Pin the horizon to the formula's last step instead of binding it to the first step at which the goal holds, so plans are read from the whole formula rather than truncated at the goal. |
 | `max_steps` | `500` | Horizon cap for the seed search. |

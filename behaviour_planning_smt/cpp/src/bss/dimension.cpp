@@ -1,12 +1,31 @@
 #include "dimension.hpp"
 
 #include <cctype>
+#include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
 namespace bp {
+
+double Dimension::distance(const std::string& a, const std::string& b) const {
+    return a == b ? 0.0 : 1.0; // discrete metric: any dimension satisfies it
+}
+
+double Dimension::numeric_distance(const std::string& a, const std::string& b) {
+    char* end_a = nullptr;
+    char* end_b = nullptr;
+    const double value_a = std::strtod(a.c_str(), &end_a);
+    const double value_b = std::strtod(b.c_str(), &end_b);
+    const bool parsed_a = end_a != a.c_str() && *end_a == '\0' && !a.empty();
+    const bool parsed_b = end_b != b.c_str() && *end_b == '\0' && !b.empty();
+    if (!parsed_a || !parsed_b) {
+        return a == b ? 0.0 : 1.0;
+    }
+    return std::fabs(value_a - value_b);
+}
 
 void Dimension::require_encoder(const Encoder& encoder, const std::string& dimension_name,
                                 std::initializer_list<const char*> supported) {

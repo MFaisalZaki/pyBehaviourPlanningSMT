@@ -46,7 +46,25 @@ public:
 
     virtual BehaviourValue evaluate(const z3::model& model) const = 0;
 
+    /**
+     * @brief Distance between two behaviour values of THIS dimension.
+     *
+     * `a` and `b` are printable values as produced by evaluate().value for two
+     * plans. The default is the discrete metric — 0 when equal, 1 otherwise —
+     * which every dimension satisfies; override it with a semantically
+     * meaningful distance (the built-ins do: absolute difference for counts,
+     * Hamming distance for the goal-ordering vector, per-function box
+     * differences for 'fn'). Diversity indicators aggregate these to score
+     * how far apart two plans are.
+     *
+     * Requirements: non-negative, symmetric, and 0 for equal values.
+     */
+    virtual double distance(const std::string& a, const std::string& b) const;
+
 protected:
+    /// |a - b| when both values parse as numbers; discrete metric otherwise.
+    static double numeric_distance(const std::string& a, const std::string& b);
+
     /**
      * Guard for encoder support: throws std::invalid_argument when the active
      * encoder is not among `supported`, naming both sides. Call it first in a

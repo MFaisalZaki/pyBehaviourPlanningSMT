@@ -1,5 +1,6 @@
 #include "cli_parser.hpp"
 #include "../bss/dimension.hpp"
+#include "../bss/diversity_indicator.hpp"
 #include "../encoders/encoder.hpp"
 #include <iostream>
 #include <stdexcept>
@@ -16,9 +17,11 @@ void CLIParser::print_help(const char* program_name) {
         "PlanGenerationResult per plan: <output_result.pb> holds the overall result\n"
         "and <output_result.pb>.<i> the i-th plan (i starting at 0).\n"
         "\n"
-        "Encoders and behaviour-space dimensions are plugins: --list-encoders and\n"
-        "--list-dimensions show what this build registered. Each dimension decides\n"
-        "for itself which encoders it supports.\n"
+        "Encoders, behaviour-space dimensions and diversity indicators are plugins:\n"
+        "--list-encoders, --list-dimensions and --list-indicators show what this\n"
+        "build registered. Each dimension decides for itself which encoders it\n"
+        "supports, and the indicator is the optimisation metric the diversification\n"
+        "maximises over the behaviour space.\n"
         "\n"
         "Options:\n"
         "  --num-plans K             number of diverse plans to generate (default 1)\n"
@@ -32,8 +35,11 @@ void CLIParser::print_help(const char* program_name) {
         "                              uv        utility value (oversubscription tasks)\n"
         "                              fn:FILE   numeric function values, FILE = functions file\n"
         "                              ac:NAME   action count (example plugin)\n"
+        "  --indicator NAME[:ARG]    diversity-indicator plugin to optimise (default bdc,\n"
+        "                            behaviour diversity count)\n"
         "  --list-dimensions         list the registered dimension plugins and exit\n"
         "  --list-encoders           list the registered encoder plugins and exit\n"
+        "  --list-indicators         list the registered diversity-indicator plugins and exit\n"
         "  --horizon-length N        skip the seed search and use N as the optimal plan length\n"
         "  --horizon-planning-mode   pin the horizon to the formula's last step\n"
         "  --max-steps N             seed-search horizon cap (default 500)\n"
@@ -93,6 +99,11 @@ void CLIParser::parse(Config& config, int argc, char* argv[]) {
                               EncoderRegistry::instance().list());
             exit(0);
         }
+        if (arg == "--list-indicators") {
+            print_plugin_list("Registered diversity-indicator plugins",
+                              DiversityIndicatorRegistry::instance().list());
+            exit(0);
+        }
     }
 
     auto next_value = [&](int& i, const std::string& flag) -> std::string {
@@ -111,6 +122,18 @@ void CLIParser::parse(Config& config, int argc, char* argv[]) {
         else if (arg == "--encoder") {
             config.planner.encoder = next_value(i, arg);
             EncoderRegistry::instance().get(config.planner.encoder); // validate early
+        }
+        else if (arg == "--indicator") {
+            std::string value = next_value(i, arg);
+            auto colon = value.find(':');
+            if (colon == std::string::npos) {
+                config.planner.indicator = value;
+                config.planner.indicator_arg.clear();
+            } else {
+                config.planner.indicator = value.substr(0, colon);
+                config.planner.indicator_arg = value.substr(colon + 1);
+            }
+            DiversityIndicatorRegistry::instance().get(config.planner.indicator); // validate early
         }
         else if (arg == "--dim") {
             DimensionSpec spec = parse_dimension(next_value(i, arg));

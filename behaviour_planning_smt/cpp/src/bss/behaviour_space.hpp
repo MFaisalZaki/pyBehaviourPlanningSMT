@@ -44,6 +44,9 @@ public:
     std::optional<DiversePlan> check(const std::vector<z3::expr>& assumptions);
 
     const Encoder& encoder() const { return *encoder_; }
+    /// The built dimensions, in request order — indicators use them to compute
+    /// per-dimension distances between behaviour values.
+    const std::vector<std::unique_ptr<Dimension>>& dimensions() const { return dimensions_; }
     int optimal_plan_length() const { return optimal_plan_length_; }
     int formula_length() const { return encoder_->formula_length(); }
     z3::context& ctx() const { return ctx_; }

@@ -1,13 +1,14 @@
 #include "fbi_planner.hpp"
+#include "../bss/diversity_indicator.hpp"
 #include "../encoders/grounded_encoding_visitor.hpp"
 #include "../encoders/z3_variable_factory.hpp"
 #include "../util/logger.hpp"
 #include "../util/stats.hpp"
 #include "../util/z3_utils.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace bp {
 
@@ -16,16 +17,6 @@ namespace {
 double seconds_since(const std::chrono::high_resolution_clock::time_point& start) {
     return std::chrono::duration<double>(
         std::chrono::high_resolution_clock::now() - start).count();
-}
-
-// A stable key for a plan: the names of its selected action literals.
-std::string plan_key(const DiversePlan& plan) {
-    std::string key;
-    for (const auto& literal : plan.action_literals) {
-        key += literal.decl().name().str();
-        key += '|';
-    }
-    return key;
 }
 
 } // namespace
@@ -336,84 +327,53 @@ FBIPlanner::Result FBIPlanner::plan() {
         return result;
     }
 
-    // --- Build the behaviour space.
+    // --- Build the behaviour space and hand it to the diversity indicator.
     auto diversify_start = std::chrono::high_resolution_clock::now();
     BehaviourSpace space(problem_, ctx_, config, *optimal_length, oversubscription_goals_);
 
+    const auto& indicator_entry =
+        DiversityIndicatorRegistry::instance().get(config.planner.indicator);
+    std::unique_ptr<DiversityIndicator> indicator =
+        indicator_entry.factory(config.planner.indicator_arg);
+    result.indicator = indicator->name();
+    Logger::instance().info("Diversifying with indicator: " + indicator->name());
+
     const size_t requested_plans = static_cast<size_t>(std::max(0, config.planner.num_plans));
-    std::vector<z3::expr> behaviours;                 // behaviour of every found plan
-    std::unordered_set<std::string> behaviour_keys;   // duplicate detection
-    std::vector<z3::expr> plan_blocks;                // And(action literals) per plan
-    std::unordered_set<std::string> plan_keys;
-
-    auto record_plan = [&](DiversePlan&& plan, bool is_new_behaviour) {
-        plan.is_new_behaviour = is_new_behaviour;
-        plan_keys.insert(plan_key(plan));
-        plan_blocks.push_back(mk_and_vec(ctx_, plan.action_literals));
-        result.plans.push_back(std::move(plan));
-    };
-
     auto out_of_time = [&]() {
         if (seconds_since(overall_start) < config.global.timeout) return false;
         Logger::instance().info("*** TIMEOUT reached while diversifying ***");
         return true;
     };
 
-    // --- Phase 1: enumerate plans with pairwise-distinct behaviours.
-    while (result.plans.size() < requested_plans && !out_of_time()) {
-        std::vector<z3::expr> assumptions;
-        if (!behaviours.empty()) {
-            assumptions.push_back(!mk_or_vec(ctx_, behaviours));
-        }
-        std::optional<DiversePlan> found = space.check(assumptions);
-        if (!found) break;
-
-        if (plan_keys.count(plan_key(*found))) {
-            // The solver returned a plan we already hold: the space cannot make
-            // progress (this only happens with degenerate dimensions).
-            break;
-        }
-
-        const bool has_new_behaviour =
-            found->behaviour && !behaviour_keys.count(found->behaviour_expr_str);
-        if (found->behaviour && has_new_behaviour) {
-            behaviours.push_back(*found->behaviour);
-            behaviour_keys.insert(found->behaviour_expr_str);
-        }
-
-        Logger::instance().info("[FBI] Behaviour phase: plan " +
-                                std::to_string(result.plans.size() + 1) + " with " +
-                                std::to_string(found->plan.length()) + " actions");
-        record_plan(std::move(*found), true);
-        result.new_behaviour_count++;
-
-        if (!has_new_behaviour) {
-            // Degenerate behaviour (empty or repeated): the behaviour space is
-            // exhausted, continue with the plan phase.
-            break;
-        }
-    }
-
-    // --- Phase 2: reuse known behaviours, forbid known plans.
-    while (result.plans.size() < requested_plans && !out_of_time()) {
-        std::vector<z3::expr> assumptions;
-        if (!behaviours.empty()) {
-            assumptions.push_back(mk_or_vec(ctx_, behaviours));
-        }
-        if (!plan_blocks.empty()) {
-            assumptions.push_back(!mk_or_vec(ctx_, plan_blocks));
-        }
-        std::optional<DiversePlan> found = space.check(assumptions);
-        if (!found) break;
-        if (plan_keys.count(plan_key(*found))) break;
-
-        Logger::instance().info("[FBI] Plan phase: plan " +
-                                std::to_string(result.plans.size() + 1) + " with " +
-                                std::to_string(found->plan.length()) + " actions");
-        record_plan(std::move(*found), false);
-    }
-
+    DiversityIndicator::Result diversified =
+        indicator->generate(space, requested_plans, out_of_time);
+    result.plans = std::move(diversified.plans);
+    result.new_behaviour_count = diversified.new_behaviour_count;
     result.diversify_seconds = seconds_since(diversify_start);
+
+    // --- Score the plan set: pairwise behaviour distance, summed over the
+    // per-dimension distance functions.
+    if (result.plans.size() >= 2) {
+        double total = 0.0;
+        double minimum = -1.0;
+        for (size_t i = 0; i < result.plans.size(); ++i) {
+            for (size_t j = i + 1; j < result.plans.size(); ++j) {
+                double pair_distance = 0.0;
+                for (size_t d = 0; d < space.dimensions().size(); ++d) {
+                    const auto& dimension = space.dimensions()[d];
+                    const std::string& value_i = result.plans[i].attributes[d].second;
+                    const std::string& value_j = result.plans[j].attributes[d].second;
+                    pair_distance += dimension->distance(value_i, value_j);
+                }
+                result.pairwise_distances.push_back({i, j, pair_distance});
+                total += pair_distance;
+                minimum = minimum < 0 ? pair_distance : std::min(minimum, pair_distance);
+            }
+        }
+        result.min_behaviour_distance = minimum;
+        result.avg_behaviour_distance = total / result.pairwise_distances.size();
+    }
+
     stats.set("planner.plans_found", static_cast<double>(result.plans.size()));
     stats.set("planner.new_behaviours", static_cast<double>(result.new_behaviour_count));
     stats.set("planner.optimal_plan_length", static_cast<double>(result.optimal_plan_length));
