@@ -1,0 +1,1 @@
+https://raw.githubusercontent.com/aiplan4eu/unified-planning/refs/heads/master/unified_planning/grpc/unified_planning.proto

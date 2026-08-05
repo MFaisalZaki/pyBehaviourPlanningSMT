@@ -1,12 +1,12 @@
 """
-Tutorial 3: Controlling the horizon.
+Tutorial 5: Controlling the horizon.
 
-Before it can encode anything, the planner needs a formula length. By default it
-finds one by solving the task once and taking the optimal plan's length. That
-first solve can be the slowest part of a run, and the options below let you
-skip it or override what it produced.
+Before it can encode anything, the planner needs a formula length. By default
+the C++ core finds one by solving the task once and taking the optimal plan's
+length (the seed search). That first solve can be the slowest part of a run,
+and the options below let you skip it or override what it produced.
 
-Run with: python tutorials/03_planner_options.py
+Run with: python tutorials/05_planner_options.py
 """
 
 import os
@@ -20,7 +20,7 @@ problemfile = os.path.join(pddls_dir, 'pfile1.pddl')
 task = PDDLReader().parse_problem(domainfile, problemfile)
 dims = [['go', {}]]
 
-# Any keyword argument is forwarded to the underlying behaviour space.
+# Any keyword argument is forwarded to the C++ core.
 
 # 1. The default: solve the task first to infer the optimal plan length. The
 #    formula length is that value scaled by cb's quality bound, or by 1.0 when
@@ -49,9 +49,16 @@ planner = ForbiddenBehaviorSMTPlanner(task, dims, horizon_length=12, horizon_pla
 plans   = planner.plan(2)
 print(f'[horizon_planning_mode=True] plan lengths: {[len(p.actions) for p in plans]}')
 
-# 4. use_pypmt forces the SMT planner for the inference step in 1. Numeric and
-#    oversubscription tasks use it regardless -- this rovers task is numeric, so
-#    the flag changes nothing here. It matters for classical tasks, which
-#    otherwise infer their length with symk.
-planner = ForbiddenBehaviorSMTPlanner(task, dims, use_pypmt=True)
-print(f'[use_pypmt=True] inferred length: {planner.behaviour_space.optimal_plan_length}')
+# 4. The old use_pypmt flag is gone: the seed search always runs on the C++ SMT
+#    core now, for classical and numeric tasks alike (oversubscription tasks
+#    seed through a bounded utility optimization, see the main README). The
+#    flag is still accepted and ignored, so old scripts keep running.
+#
+#    What you can tune instead are the solver budgets of the C++ core:
+planner = ForbiddenBehaviorSMTPlanner(task, dims,
+                                      solver_timeout=60000,  # ms per solver call
+                                      solver_memory=4000,    # MB per solver call
+                                      max_steps=100)         # seed-search horizon cap
+plans = planner.plan(2)
+print(f'[tuned solver budgets] inferred length: {planner.behaviour_space.optimal_plan_length}, '
+      f'plans: {len(plans)}')

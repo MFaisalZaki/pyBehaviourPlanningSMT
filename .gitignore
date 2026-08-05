@@ -201,3 +201,7 @@ v-env/
 dev.py
 ibm-diversescore/
 *.error
+# C++ core build artifacts
+behaviour_planning_smt/cpp/build/
+behaviour_planning_smt/bin/
+tutorials/plans/

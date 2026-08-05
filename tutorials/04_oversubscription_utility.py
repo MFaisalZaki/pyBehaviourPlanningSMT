@@ -14,7 +14,6 @@ Run with: python tutorials/04_oversubscription_utility.py
 """
 
 import os
-import z3
 import unified_planning as up
 from unified_planning.io import PDDLReader
 from unified_planning.model.walkers.free_vars import FreeVarsExtractor
@@ -58,16 +57,12 @@ dims += [['uv', {}]]
 dims += [['cb', {"quality-bound": 0.5}]]
 
 planner = ForbiddenBehaviorSMTPlanner(task, dims)
+plans   = planner.plan(4)
 print(f'Inferred plan length: {planner.behaviour_space.optimal_plan_length}')
-
-plans = planner.plan(4)
 print(f'Got {len(plans)} plans.\n')
-
-def dimension_value(behaviour_expr):
-    return next(a.as_long() for a in behaviour_expr.children() if z3.is_int_value(a))
 
 # Each plan collects a different amount of utility: that is its behaviour. A
 # cheap plan settling for one goal and a longer one collecting several are both
 # valid answers here, which is exactly what a hard-goal task cannot express.
 for i, plan in enumerate(plans):
-    print(f'Plan {i+1}: {len(plan.actions)} actions | utility: {dimension_value(plan.behaviour_attr["uv"])}')
+    print(f'Plan {i+1}: {len(plan.actions)} actions | utility: {plan.behaviour_attr["uv"]}')

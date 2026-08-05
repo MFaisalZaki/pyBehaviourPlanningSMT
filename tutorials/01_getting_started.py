@@ -27,23 +27,25 @@ dims  = []
 dims += [['go', {}]]                   # the order in which goal predicates are achieved.
 dims += [['cb', {"quality-bound": q}]] # the plan cost, bounded by q * optimal cost.
 
-# 2. Run the planner. Building it solves the task once to find the optimal plan
-#    length, which is why this step takes a moment.
-planner = ForbiddenBehaviorSMTPlanner(task, dims)
-print(f'Optimal plan length: {planner.behaviour_space.optimal_plan_length}')
-
+# 2. Run the planner. Everything happens inside the C++ core in one go: it
+#    first solves the task to find the optimal plan length (the seed search),
+#    then iterates the behaviour space for diverse plans.
+#
 # plan(k) returns *at most* k plans. It stops early when neither a new behaviour
 # nor a new plan can be found, so always check what you actually got back.
-plans = planner.plan(k)
+planner = ForbiddenBehaviorSMTPlanner(task, dims)
+plans   = planner.plan(k)
+print(f'Optimal plan length: {planner.behaviour_space.optimal_plan_length}')
 print(f'Asked for {k} plans, got {len(plans)}.')
 
 # 3. Inspect the behaviours. Every returned plan carries three extra attributes:
-#    behaviour_expr (the z3 expression), behaviour_attr (a value per dimension)
-#    and behaviour_str (a printable form).
+#    behaviour_attr (a value per dimension, as strings), behaviour_str (a
+#    printable summary like 'go=011 cb=10') and behaviour_expr (the SMT-LIB text
+#    of the behaviour formula the C++ core used).
 for i, plan in enumerate(plans):
     print(f'\nPlan {i+1}: {len(plan.actions)} actions')
     print(f'  dimensions: {list(plan.behaviour_attr.keys())}')
-    print(f'  behaviour:  {plan.behaviour_str[:100]}...')
+    print(f'  behaviour:  {plan.behaviour_str}')
 
 # 4. Dump the plans to disk, annotated with their cost and behaviour.
 plans_dir = os.path.join(os.path.dirname(__file__), 'plans')

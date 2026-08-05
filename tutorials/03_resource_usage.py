@@ -10,7 +10,6 @@ Run with: python tutorials/03_resource_usage.py
 """
 
 import os
-import z3
 from unified_planning.io import PDDLReader
 from behaviour_planning_smt.fbi.planner import ForbiddenBehaviorSMTPlanner
 
@@ -42,21 +41,16 @@ dims += [['ru', resourcesfile]]
 dims += [['cb', {"quality-bound": 1.5}]]
 
 planner = ForbiddenBehaviorSMTPlanner(task, dims)
+plans   = planner.plan(4)
 print(f'Optimal plan length: {planner.behaviour_space.optimal_plan_length}')
-
-plans = planner.plan(4)
 print(f'Got {len(plans)} plans.\n')
 
-# behaviour_attr holds one z3 equality per dimension rather than a plain value,
-# and z3 prints those with the number first, as '2 == ru'. Pick the numeral out
-# of the equality's children to recover the count itself.
-def dimension_value(behaviour_expr):
-    return next(a.as_long() for a in behaviour_expr.children() if z3.is_int_value(a))
-
-# The 'ru' value is the number of rovers the plan touched. Plans sharing a value
-# have the same behaviour along this dimension: the planner returns them only
-# once the behaviour space has no unseen behaviour left to offer, which is why
-# asking for 4 plans yields repeats of a value here.
+# behaviour_attr holds a plain string value per dimension, reported by the C++
+# core: for 'ru' it is the number of resources the plan used.
+#
+# Plans sharing a value have the same behaviour along this dimension: the
+# planner returns them only once the behaviour space has no unseen behaviour
+# left to offer, which is why asking for 4 plans can yield repeats of a value.
 for i, plan in enumerate(plans):
-    rovers_used = dimension_value(plan.behaviour_attr['ru'])
+    rovers_used = int(plan.behaviour_attr['ru'])
     print(f'Plan {i+1}: {len(plan.actions)} actions | rovers used: {rovers_used}')

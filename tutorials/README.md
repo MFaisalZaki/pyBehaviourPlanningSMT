@@ -3,16 +3,18 @@
 Runnable introductions to the planner. Each script stands alone and plans a
 bundled task, so no benchmark checkout is needed.
 
-Install the package first, then run them from the repository root:
+Install the package and build the C++ core first, then run them from the
+repository root:
 
 ```
 python -m venv venv && source venv/bin/activate && pip install .
+python build.py
 python tutorials/01_getting_started.py
 ```
 
-Expect each script to take a minute or two: building a planner solves the task
-once to find the optimal plan length before anything is encoded, and the
-underlying planners are chatty on stdout.
+Each script takes a few seconds to a minute: `plan(k)` runs the C++ core once,
+which solves the task to find the optimal plan length before anything is
+encoded, and reports its progress on stdout.
 
 | Tutorial | Covers |
 | -------- | ------ |
@@ -20,8 +22,8 @@ underlying planners are chatty on stdout.
 | [02_behaviour_space_dimensions.py](02_behaviour_space_dimensions.py) | How the choice of dimensions changes which plans come back, covering `go` and `fn`. |
 | [03_resource_usage.py](03_resource_usage.py) | The `ru` dimension and the resources file. |
 | [04_oversubscription_utility.py](04_oversubscription_utility.py) | The `uv` dimension, and turning a classical task into an oversubscription one. |
-| [05_planner_options.py](05_planner_options.py) | Controlling the horizon: `horizon_length`, `horizon_planning_mode` and `use_pypmt`. |
-| [06_custom_dimension.py](06_custom_dimension.py) | Writing and registering a dimension of your own. |
+| [05_planner_options.py](05_planner_options.py) | Controlling the horizon: `horizon_length`, `horizon_planning_mode` and the solver budgets. |
+| [06_custom_dimension.py](06_custom_dimension.py) | Writing a dimension of your own in the C++ core. |
 
 ## The bundled tasks
 
