@@ -1,0 +1,11 @@
+{
+    "planner-tag": "FI-bdc",
+    "engine": "fi",
+    "params": {
+        "pool-factor": 5,
+        "extract-indicator": "bdc"
+    },
+    "tracks": [
+        "classical"
+    ]
+}

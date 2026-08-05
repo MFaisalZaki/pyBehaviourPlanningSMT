@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bpbench"
+version = "0.1.0"
+description = "Benchmark harness for pyBehaviourPlanningSMT: FBI vs ForbidIterative, judged by BehaviourDiversityCounter"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+bpbench = "bpbench.cli:main"
+
+[tool.setuptools]
+packages = ["bpbench"]

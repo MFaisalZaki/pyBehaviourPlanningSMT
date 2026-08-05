@@ -1,0 +1,12 @@
+{
+    "planner-tag": "FBI-bms",
+    "engine": "fbi",
+    "params": {
+        "indicator": "bms"
+    },
+    "tracks": [
+        "classical",
+        "numeric",
+        "oversubscription"
+    ]
+}

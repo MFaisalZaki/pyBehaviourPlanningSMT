@@ -1,0 +1,11 @@
+{
+    "planner-tag": "FI-bms",
+    "engine": "fi",
+    "params": {
+        "pool-factor": 5,
+        "extract-indicator": "bmaxsum"
+    },
+    "tracks": [
+        "classical"
+    ]
+}

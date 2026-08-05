@@ -205,3 +205,10 @@ ibm-diversescore/
 behaviour_planning_smt/cpp/build/
 behaviour_planning_smt/bin/
 tutorials/plans/
+
+# benchmark harness artifacts
+benchmarks/venv/
+benchmarks/sandbox*/
+benchmarks/benchmark-tasks/
+benchmarks/experiment/
+benchmarks/bpbench.egg-info/

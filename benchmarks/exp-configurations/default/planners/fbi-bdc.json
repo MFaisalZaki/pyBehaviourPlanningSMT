@@ -1,0 +1,12 @@
+{
+    "planner-tag": "FBI-bdc",
+    "engine": "fbi",
+    "params": {
+        "indicator": "bdc"
+    },
+    "tracks": [
+        "classical",
+        "numeric",
+        "oversubscription"
+    ]
+}

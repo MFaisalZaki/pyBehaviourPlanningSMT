@@ -227,6 +227,21 @@ bounded encoding (`oversubscription_horizon` steps) and, at maximum utility,
 minimizes the plan length — this replaces the external oversubscription seed
 planner the Python implementation used.
 
+# Benchmarks
+[benchmarks/](benchmarks/) holds `bpbench`, a benchmark harness in the style
+of [ASPPlanners' aspbench](https://github.com/MFaisalZaki/ASPPlanners/tree/main/benchmarks):
+it sweeps the FBI planner's diversity indicators against
+[ForbidIterative](https://github.com/MFaisalZaki/forbiditerative) baselines
+that generate a plan pool and extract a k-subset, with every returned plan set
+judged by
+[BehaviourDiversityCounter](https://github.com/MFaisalZaki/BehaviourDiversityCounter)
+(behaviour diversity count and behaviour max-sum). One script sets everything
+up — see [benchmarks/README.md](benchmarks/README.md):
+
+```bash
+cd benchmarks && ./setup_benchmark.sh
+```
+
 # Citation
 ```
 @article{abdelwahed2024behaviour,

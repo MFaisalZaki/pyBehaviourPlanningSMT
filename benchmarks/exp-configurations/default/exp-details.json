@@ -1,0 +1,32 @@
+{
+    "cfgs": {
+        "timelimit": "00:30:00",
+        "memorylimit": "8GB",
+        "slurm-time-headroom": "00:05:00",
+        "slurm-memory-headroom": "1GB",
+        "slurm": {
+            "cpus-per-task": 1,
+            "partition": null,
+            "account": null,
+            "max-parallel-jobs": 50,
+            "max-array-size": 1000,
+            "extra-directives": []
+        }
+    },
+    "tasks": {
+        "tracks": [
+            "classical",
+            "numeric",
+            "oversubscription"
+        ],
+        "k-plans": [
+            5
+        ],
+        "quality-bound": 1.0,
+        "max-instances-per-domain": 10,
+        "selection": "even",
+        "include-domains": [],
+        "exclude-domains": [],
+        "resources-dir": null
+    }
+}
