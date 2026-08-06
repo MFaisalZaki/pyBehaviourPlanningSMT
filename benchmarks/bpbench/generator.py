@@ -165,38 +165,58 @@ def generate(args) -> int:
 
 def _write_sbatch(sandbox: str, experiment: Experiment, tag: str, count: int,
                   uses_apptainer: bool = False) -> None:
+    """Write the job array(s) for one planner's command file.
+
+    Slurm rejects arrays whose highest index reaches the cluster's
+    MaxArraySize (`sbatch: error: ... Invalid job array specification`), so
+    runs beyond `cfgs.slurm.max-array-size` are split into several scripts,
+    each a 0-based array over a slice of the command file. Set the knob to
+    your cluster's limit (`scontrol show config | grep MaxArraySize`).
+    """
     slurm = experiment.slurm
     time_limit = seconds_to_slurm(experiment.time_limit + experiment.slurm_time_headroom)
     memory = experiment.memory_limit + experiment.slurm_memory_headroom
     max_parallel = slurm.get("max-parallel-jobs") or 50
+    max_array = int(slurm.get("max-array-size") or 1000)
+    if max_array <= 0:
+        max_array = count
 
-    lines = [
-        "#!/bin/bash",
-        f"#SBATCH --job-name=bpbench-{tag}",
-        f"#SBATCH --time={time_limit}",
-        f"#SBATCH --mem={memory}M",
-        f"#SBATCH --cpus-per-task={slurm.get('cpus-per-task', 1)}",
-        f"#SBATCH --array=1-{count}%{max_parallel}",
-        f"#SBATCH --output={sandbox}/slurm/logs/{tag}-%A_%a.out",
-    ]
-    if slurm.get("partition"):
-        lines.append(f"#SBATCH --partition={slurm['partition']}")
-    if slurm.get("account"):
-        lines.append(f"#SBATCH --account={slurm['account']}")
-    lines.extend(slurm.get("extra-directives") or [])
-    lines.append("")
-    if uses_apptainer:
-        # Clusters commonly ship apptainer as a module; loading it is a no-op
-        # where it is already on PATH.
-        lines.append("module load apptainer 2>/dev/null || true")
-    lines += [
-        f"mkdir -p {sandbox}/slurm/logs",
-        f'CMD=$(sed -n "${{SLURM_ARRAY_TASK_ID}}p" {sandbox}/cmds/{tag}.txt)',
-        'eval "$CMD"',
-        "",
-    ]
-    with open(os.path.join(sandbox, "slurm", f"bpbench-{tag}.sbatch"), "w") as handle:
-        handle.write("\n".join(lines))
+    chunks = [(offset, min(max_array, count - offset))
+              for offset in range(0, count, max_array)]
+    for index, (offset, size) in enumerate(chunks):
+        suffix = "" if len(chunks) == 1 else f"-part{index:02d}"
+        lines = [
+            "#!/bin/bash",
+            f"#SBATCH --job-name=bpbench-{tag}{suffix}",
+            f"#SBATCH --time={time_limit}",
+            f"#SBATCH --mem={memory}M",
+            f"#SBATCH --cpus-per-task={slurm.get('cpus-per-task', 1)}",
+            f"#SBATCH --array=0-{size - 1}%{max_parallel}",
+            f"#SBATCH --output={sandbox}/slurm/logs/{tag}{suffix}-%A_%a.out",
+        ]
+        if slurm.get("partition"):
+            lines.append(f"#SBATCH --partition={slurm['partition']}")
+        if slurm.get("account"):
+            lines.append(f"#SBATCH --account={slurm['account']}")
+        lines.extend(slurm.get("extra-directives") or [])
+        lines.append("")
+        if uses_apptainer:
+            # Clusters commonly ship apptainer as a module; loading it is a
+            # no-op where it is already on PATH.
+            lines.append("module load apptainer 2>/dev/null || true")
+        lines += [
+            f"mkdir -p {sandbox}/slurm/logs",
+            f"LINE=$(( SLURM_ARRAY_TASK_ID + {offset + 1} ))",
+            f'CMD=$(sed -n "${{LINE}}p" {sandbox}/cmds/{tag}.txt)',
+            'eval "$CMD"',
+            "",
+        ]
+        with open(os.path.join(sandbox, "slurm", f"bpbench-{tag}{suffix}.sbatch"),
+                  "w") as handle:
+            handle.write("\n".join(lines))
+    if len(chunks) > 1:
+        print(f"  {tag}: {count} runs split into {len(chunks)} job arrays "
+              f"of at most {max_array} tasks")
 
 
 def _write_submit_all(sandbox: str) -> None:

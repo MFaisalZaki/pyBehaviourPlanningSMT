@@ -43,6 +43,10 @@ DEFAULT_EXP_DETAILS = {
             "partition": None,
             "account": None,
             "max-parallel-jobs": 50,
+            # Runs beyond this are split into several job arrays; set it to
+            # your cluster's MaxArraySize (scontrol show config | grep -i
+            # maxarraysize), or submission fails with "Invalid job array
+            # specification".
             "max-array-size": 1000,
             "extra-directives": [],
         },

@@ -159,7 +159,10 @@ sandbox/
 ├── tasks.json                  the resolved task list (what "attempted" means)
 ├── resources/<task-id>.txt     per-task (:resource ...) declarations
 ├── cmds/<planner>.txt          one bpbench-solve command per line
-├── slurm/bpbench-<planner>.sbatch     job array, one index per line
+├── slurm/bpbench-<planner>[-partNN].sbatch   job array over (a slice of) that
+│                               file; sweeps beyond cfgs.slurm.max-array-size
+│                               (default 1000, match your cluster's
+│                               MaxArraySize) are split into several arrays
 ├── slurm/submit_all.sh
 ├── run_local.sh                the same commands through xargs -P, no scheduler
 ├── results/<planner>/<task>__k<k>.json
