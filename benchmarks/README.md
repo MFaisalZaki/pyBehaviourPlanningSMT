@@ -25,7 +25,8 @@ the slurm job arrays.
 
 On a cluster where the toolchain is not yours to choose (a protobuf too old
 to generate the accessors the C++ core is compiled against, say), put the
-whole stack in a container instead:
+whole stack in a container instead — the interactive setup asks for the
+image as one of its prompts (answer `none` to stay on the host), or:
 
 ```bash
 cd benchmarks

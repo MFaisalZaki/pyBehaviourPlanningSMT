@@ -61,6 +61,9 @@ if [[ $ASSUME_YES -eq 0 ]]; then
     INSTANCE_SELECTION="${answer:-$INSTANCE_SELECTION}"
     read -r -p "max instances per domain (0 = no cap) [$MAX_INSTANCES]: " answer; MAX_INSTANCES="${answer:-$MAX_INSTANCES}"
     read -r -p "k values [$K_PLANS]: " answer;                K_PLANS="${answer:-$K_PLANS}"
+    read -r -p "apptainer image, built if missing (none = install on the host) [${APPTAINER_IMAGE:-none}]: " answer
+    APPTAINER_IMAGE="${answer:-$APPTAINER_IMAGE}"
+    [[ "$APPTAINER_IMAGE" == "none" ]] && APPTAINER_IMAGE=""
 fi
 
 if [[ -n "$APPTAINER_IMAGE" ]]; then
