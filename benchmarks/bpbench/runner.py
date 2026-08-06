@@ -206,7 +206,7 @@ def solve(args) -> int:
 
 def _run(args, result, engine, params, k, quality_bound, workdir, started):
     from behaviour_diversity_counter import BehaviourDiversityCounter
-    from .engines import run_fbi, run_fi
+    from .engines import run_fbi, run_fi, run_symk
 
     def remaining() -> int:
         if not args.time_limit:
@@ -229,7 +229,14 @@ def _run(args, result, engine, params, k, quality_bound, workdir, started):
 
     planner_dims, behaviour_dims, distance_dims = _build_dimensions(
         args.track, quality_bound, resources_file, osp_goals)
+    if engine == "fbi" and params.get("naive"):
+        # The naive baseline: no dimensions, so every plan shares the trivial
+        # behaviour and the FBI loop degenerates to forbid-plan-and-regenerate.
+        # The judge's dimensions stay, so its plans are scored like everyone's.
+        planner_dims = []
     result["dimensions"] = {
+        # The pool engines (fi, symk) have no behaviour space of their own.
+        "planner": [spec[0] for spec in planner_dims] if engine == "fbi" else [],
         "behaviour": [name for name, _info in behaviour_dims],
         "distance": [name for name, _info in distance_dims],
     }
@@ -246,6 +253,13 @@ def _run(args, result, engine, params, k, quality_bound, workdir, started):
             task, renamed_domain, renamed_problem, k, quality_bound, params,
             workdir, remaining())
         plans = None  # extracted below, under the counter's clock
+    elif engine == "symk":
+        if args.track != "oversubscription":
+            raise ValueError("the symk engine is the oversubscription baseline; "
+                             f"it cannot run the '{args.track}' track")
+        pool, engine_metrics, logs = run_symk(
+            task, osp_goals, k, params, workdir, remaining(), args.memory_limit)
+        plans = None  # extracted below, under the counter's clock
     else:
         raise ValueError(f"unknown engine '{engine}' in {args.planner_cfg}")
     result["engine-metrics"] = engine_metrics
@@ -257,7 +271,7 @@ def _run(args, result, engine, params, k, quality_bound, workdir, started):
     behaviour_counter = BehaviourDiversityCounter(task, behaviour_dims)
     distance_counter = BehaviourDiversityCounter(task, distance_dims)
 
-    if engine == "fi":
+    if pool is not None:
         extract_started = time.time()
         indicator = params.get("extract-indicator", "bdc")
         usable_pool = _drop_inapplicable(pool, behaviour_counter, result)

@@ -230,9 +230,12 @@ planner the Python implementation used.
 # Benchmarks
 [benchmarks/](benchmarks/) holds `bpbench`, a benchmark harness in the style
 of [ASPPlanners' aspbench](https://github.com/MFaisalZaki/ASPPlanners/tree/main/benchmarks):
-it sweeps the FBI planner's diversity indicators against
+it sweeps the FBI planner's diversity indicators against a naive FBI without
+dimensions (the forbid-plans ablation),
 [ForbidIterative](https://github.com/MFaisalZaki/forbiditerative) baselines
-that generate a plan pool and extract a k-subset, with every returned plan set
+that generate a plan pool and extract a k-subset, and — on the
+oversubscription track, via a soft-goals compilation —
+[SymK](https://github.com/speckdavid/symk) pools, with every returned plan set
 judged by
 [BehaviourDiversityCounter](https://github.com/MFaisalZaki/BehaviourDiversityCounter)
 (behaviour diversity count and behaviour max-sum). One script sets everything

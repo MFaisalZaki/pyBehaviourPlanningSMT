@@ -1,0 +1,11 @@
+{
+    "planner-tag": "SymK-bdc",
+    "engine": "symk",
+    "params": {
+        "pool-factor": 5,
+        "extract-indicator": "bdc"
+    },
+    "tracks": [
+        "oversubscription"
+    ]
+}

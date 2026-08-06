@@ -1,9 +1,10 @@
 # bpbench — benchmark harness for pyBehaviourPlanningSMT
 
-Compares the FBI planner's diversity indicators against ForbidIterative
-baselines, one job per (planner, task, k), and turns the results into a
-coverage-and-diversity report. The stages, experiment layout and sandbox
-structure follow the
+Compares the FBI planner's diversity indicators against a naive FBI without
+dimensions, ForbidIterative baselines, and a SymK baseline on the
+oversubscription track — one job per (planner, task, k) — and turns the
+results into a coverage-and-diversity report. The stages, experiment layout
+and sandbox structure follow the
 [aspbench harness of ASPPlanners](https://github.com/MFaisalZaki/ASPPlanners/tree/main/benchmarks).
 
 The whole thing is one script away:
@@ -16,8 +17,9 @@ cd benchmarks
 That creates a virtualenv, installs the planner (and builds its C++ core), the
 harness, [BehaviourDiversityCounter](https://github.com/MFaisalZaki/BehaviourDiversityCounter)
 and [ForbidIterative](https://github.com/MFaisalZaki/forbiditerative), clones
-the benchmark repositories, writes an experiment with the limits you gave, and
-generates the slurm job arrays. Every prompt also has a flag, so a scripted
+and builds [SymK](https://github.com/speckdavid/symk), clones the benchmark
+repositories, writes an experiment with the limits you gave, and generates
+the slurm job arrays. Every prompt also has a flag, so a scripted
 run is the same script:
 
 ```bash
@@ -28,16 +30,19 @@ run is the same script:
 
 ## What is compared
 
-Four planner configurations ship by default; every `.json` in
+Seven planner configurations ship by default; every `.json` in
 `experiment/planners/` is benchmarked, so delete a file to leave one out or
 drop in your own:
 
-| configuration | what it does |
-|---|---|
-| `FBI-bdc` | this repository's planner, behaviour-diversity-count indicator |
-| `FBI-bms` | the same planner, BehaviourMaxSum indicator |
-| `FI-bdc` | ForbidIterative generates a pool of `pool-factor × k` plans (extended unordered top-quality), then `k` are extracted with the counter's `bdc` indicator |
-| `FI-bms` | the same pool, extracted with the counter's `bmaxsum` indicator |
+| configuration | tracks | what it does |
+|---|---|---|
+| `FBI-bdc` | all | this repository's planner, behaviour-diversity-count indicator |
+| `FBI-bms` | all | the same planner, BehaviourMaxSum indicator |
+| `FBI-naive` | all | the same planner with **no dimensions**: every plan shares the trivial behaviour, so the loop degenerates to forbid-plan-and-regenerate — the ablation showing what the behaviour space buys |
+| `FI-bdc` | classical | ForbidIterative generates a pool of `pool-factor × k` plans (extended unordered top-quality), then `k` are extracted with the counter's `bdc` indicator |
+| `FI-bms` | classical | the same pool, extracted with the counter's `bmaxsum` indicator |
+| `SymK-bdc` | oversubscription | SymK generates the pool (see below), then `k` are extracted with the counter's `bdc` indicator |
+| `SymK-bms` | oversubscription | the same pool, extracted with the counter's `bmaxsum` indicator |
 
 **One judge for everyone.** Whatever produced the k plans, the returned set is
 scored by BehaviourDiversityCounter — the plans are replayed against the task,
@@ -52,7 +57,25 @@ classical tasks (plus `ru` where the resources data declares the instance),
 `go` + `cb` + `fn` for numeric ones, and `cb` + `uv` for oversubscription —
 the oversubscription track is the classical selection with priced goals
 (utilities 2, 4, 6, … in goal order) instead of hard goals. ForbidIterative
-runs on the classical track only.
+needs hard goals, so it runs on the classical track only; `FBI-naive` plans
+without dimensions but is judged along the same track dimensions as everyone
+else.
+
+**The SymK oversubscription baseline.** Mainline SymK dropped native
+oversubscription support, so the harness compiles the priced-goals task to
+classical planning with the soft-goals-can-be-compiled-away construction
+(Keyder & Geffner): a `plan_mode` fluent gates the original actions (cost 1
+each), and an `end` action starts a fixed chain in which each priced goal is
+either *collected* (it holds; cost 0) or *forgone* (cost `1000 × utility`).
+With the forgone-utility scale above any realistic plan length, SymK's
+symbolic top-k search (`symk_bd` with the unordered plan selector) enumerates
+plans by maximum utility first, then fewest actions — the FBI seed's own
+oversubscription objective — and the fixed chain means no pool slot is wasted
+on collect/forgo permutations of the same core plan. The bookkeeping actions
+are stripped from the returned plans and the k-subset is extracted and judged
+against the *original* priced-goals task. The setup script clones and builds
+SymK at `benchmarks/symk`; a different location can be given per planner
+configuration (`"symk-dir"`) or via `SYMK_HOME`.
 
 ## The stages
 

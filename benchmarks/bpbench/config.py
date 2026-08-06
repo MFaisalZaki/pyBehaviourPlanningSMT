@@ -8,8 +8,11 @@ uses:
     └── planners/
         ├── fbi-bdc.json
         ├── fbi-bms.json
+        ├── fbi-naive.json
         ├── fi-bdc.json
-        └── fi-bms.json
+        ├── fi-bms.json
+        ├── symk-bdc.json
+        └── symk-bms.json
 
 Every ``.json`` in ``planners/`` is benchmarked; to leave a planner out,
 delete its file.
@@ -72,6 +75,15 @@ DEFAULT_PLANNERS = {
         "params": {"indicator": "bms"},
         "tracks": ["classical", "numeric", "oversubscription"],
     },
+    # The naive FBI: no behaviour-space dimensions, so the loop degenerates to
+    # forbid-plan-and-regenerate. What diversity that buys is measured by the
+    # same judge dimensions as everyone else's plans.
+    "fbi-naive.json": {
+        "planner-tag": "FBI-naive",
+        "engine": "fbi",
+        "params": {"indicator": "bdc", "naive": True},
+        "tracks": ["classical", "numeric", "oversubscription"],
+    },
     # ForbidIterative generates a pool of pool-factor * k plans, then the
     # subset of k is extracted with BehaviourDiversityCounter.
     "fi-bdc.json": {
@@ -85,6 +97,23 @@ DEFAULT_PLANNERS = {
         "engine": "fi",
         "params": {"pool-factor": 5, "extract-indicator": "bmaxsum"},
         "tracks": ["classical"],
+    },
+    # SymK is the oversubscription baseline (ForbidIterative needs hard
+    # goals): the priced-goals task is compiled to classical planning with
+    # collect/forgo bookkeeping actions whose costs rank plans by forgone
+    # utility and then by length, SymK's symbolic top-k search generates the
+    # pool, and the subset of k is extracted with BehaviourDiversityCounter.
+    "symk-bdc.json": {
+        "planner-tag": "SymK-bdc",
+        "engine": "symk",
+        "params": {"pool-factor": 5, "extract-indicator": "bdc"},
+        "tracks": ["oversubscription"],
+    },
+    "symk-bms.json": {
+        "planner-tag": "SymK-bms",
+        "engine": "symk",
+        "params": {"pool-factor": 5, "extract-indicator": "bmaxsum"},
+        "tracks": ["oversubscription"],
     },
 }
 

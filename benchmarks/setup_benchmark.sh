@@ -1,8 +1,9 @@
 #!/bin/bash
 # One-script benchmark setup, the aspbench way: creates a virtualenv, installs
-# the planner, its C++ core, the harness, ForbidIterative and
-# BehaviourDiversityCounter, clones the benchmark repositories, writes an
-# experiment with the limits you give, and generates the slurm job arrays.
+# the planner, its C++ core, the harness, ForbidIterative,
+# BehaviourDiversityCounter and SymK (the oversubscription baseline), clones
+# the benchmark repositories, writes an experiment with the limits you give,
+# and generates the slurm job arrays.
 #
 #   ./setup_benchmark.sh
 #   ./setup_benchmark.sh --time-limit 30m --memory-limit 8GB \
@@ -58,6 +59,12 @@ echo "== installing the harness, the judge and ForbidIterative =="
 pip install -e "$HERE"
 pip install "git+https://github.com/MFaisalZaki/BehaviourDiversityCounter.git"
 pip install "git+https://github.com/MFaisalZaki/forbiditerative.git"
+
+echo "== SymK (the oversubscription baseline) =="
+[[ -d "$HERE/symk" ]] || \
+    git clone --depth 1 https://github.com/speckdavid/symk.git "$HERE/symk"
+[[ -x "$HERE/symk/builds/release/bin/downward" ]] || \
+    (cd "$HERE/symk" && python3 build.py release)
 
 echo "== benchmark repositories =="
 mkdir -p "$HERE/benchmark-tasks"

@@ -1,0 +1,11 @@
+{
+    "planner-tag": "SymK-bms",
+    "engine": "symk",
+    "params": {
+        "pool-factor": 5,
+        "extract-indicator": "bmaxsum"
+    },
+    "tracks": [
+        "oversubscription"
+    ]
+}

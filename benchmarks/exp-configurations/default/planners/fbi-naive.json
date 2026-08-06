@@ -1,0 +1,13 @@
+{
+    "planner-tag": "FBI-naive",
+    "engine": "fbi",
+    "params": {
+        "indicator": "bdc",
+        "naive": true
+    },
+    "tracks": [
+        "classical",
+        "numeric",
+        "oversubscription"
+    ]
+}
