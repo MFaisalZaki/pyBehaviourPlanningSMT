@@ -8,7 +8,8 @@
 #   ./setup_benchmark.sh
 #   ./setup_benchmark.sh --time-limit 30m --memory-limit 8GB \
 #                        --tracks "classical numeric oversubscription" \
-#                        --max-instances 10 --k-plans "5" --partition compute --yes
+#                        --instance-selection paper --k-plans "5" \
+#                        --partition compute --yes
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -17,7 +18,11 @@ REPO_ROOT="$(dirname "$HERE")"
 TIME_LIMIT="00:30:00"
 MEMORY_LIMIT="8GB"
 TRACKS="classical numeric oversubscription"
-MAX_INSTANCES=10
+# The classical and oversubscription tracks run the paper experiments'
+# instance selection; numeric runs every instance. Hence no per-domain cap
+# by default — pass --max-instances (or answer the prompt) to trim a sweep.
+INSTANCE_SELECTION="paper"
+MAX_INSTANCES=0
 K_PLANS="5"
 QUALITY_BOUND="1.0"
 PARTITION=""
@@ -25,14 +30,15 @@ ASSUME_YES=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --time-limit)    TIME_LIMIT="$2"; shift 2;;
-        --memory-limit)  MEMORY_LIMIT="$2"; shift 2;;
-        --tracks)        TRACKS="$2"; shift 2;;
-        --max-instances) MAX_INSTANCES="$2"; shift 2;;
-        --k-plans)       K_PLANS="$2"; shift 2;;
-        --quality-bound) QUALITY_BOUND="$2"; shift 2;;
-        --partition)     PARTITION="$2"; shift 2;;
-        --yes|-y)        ASSUME_YES=1; shift;;
+        --time-limit)         TIME_LIMIT="$2"; shift 2;;
+        --memory-limit)       MEMORY_LIMIT="$2"; shift 2;;
+        --tracks)             TRACKS="$2"; shift 2;;
+        --instance-selection) INSTANCE_SELECTION="$2"; shift 2;;
+        --max-instances)      MAX_INSTANCES="$2"; shift 2;;
+        --k-plans)            K_PLANS="$2"; shift 2;;
+        --quality-bound)      QUALITY_BOUND="$2"; shift 2;;
+        --partition)          PARTITION="$2"; shift 2;;
+        --yes|-y)             ASSUME_YES=1; shift;;
         *) echo "unknown option: $1" >&2; exit 1;;
     esac
 done
@@ -41,7 +47,9 @@ if [[ $ASSUME_YES -eq 0 ]]; then
     read -r -p "time limit per run [$TIME_LIMIT]: " answer;   TIME_LIMIT="${answer:-$TIME_LIMIT}"
     read -r -p "memory limit per run [$MEMORY_LIMIT]: " answer; MEMORY_LIMIT="${answer:-$MEMORY_LIMIT}"
     read -r -p "tracks [$TRACKS]: " answer;                   TRACKS="${answer:-$TRACKS}"
-    read -r -p "max instances per domain [$MAX_INSTANCES]: " answer; MAX_INSTANCES="${answer:-$MAX_INSTANCES}"
+    read -r -p "instance selection for classical/oversubscription (paper/none/file) [$INSTANCE_SELECTION]: " answer
+    INSTANCE_SELECTION="${answer:-$INSTANCE_SELECTION}"
+    read -r -p "max instances per domain (0 = no cap) [$MAX_INSTANCES]: " answer; MAX_INSTANCES="${answer:-$MAX_INSTANCES}"
     read -r -p "k values [$K_PLANS]: " answer;                K_PLANS="${answer:-$K_PLANS}"
 fi
 
@@ -80,16 +88,18 @@ bpbench init --exp-dir "$HERE/experiment" \
     --time-limit "$TIME_LIMIT" --memory-limit "$MEMORY_LIMIT" \
     --resources-dir "$REPO_ROOT/paper_experiments/data/classical-domains-ru-info"
 
-# stamp the requested tracks / k values / cap into exp-details.json
-python3 - "$HERE/experiment/exp-details.json" "$TRACKS" "$MAX_INSTANCES" "$K_PLANS" "$QUALITY_BOUND" "$PARTITION" <<'PYEOF'
+# stamp the requested tracks / selection / k values / cap into exp-details.json
+python3 - "$HERE/experiment/exp-details.json" "$TRACKS" "$MAX_INSTANCES" "$K_PLANS" "$QUALITY_BOUND" "$PARTITION" "$INSTANCE_SELECTION" <<'PYEOF'
 import json, sys
-path, tracks, cap, ks, quality_bound, partition = sys.argv[1:7]
+path, tracks, cap, ks, quality_bound, partition, instance_selection = sys.argv[1:8]
 with open(path) as handle:
     details = json.load(handle)
 details["tasks"]["tracks"] = tracks.split()
 details["tasks"]["max-instances-per-domain"] = int(cap)
 details["tasks"]["k-plans"] = [int(k) for k in ks.split()]
 details["tasks"]["quality-bound"] = float(quality_bound)
+details["tasks"]["instance-selection"] = (
+    None if instance_selection in ("", "none") else instance_selection)
 if partition:
     details["cfgs"]["slurm"]["partition"] = partition
 with open(path, "w") as handle:

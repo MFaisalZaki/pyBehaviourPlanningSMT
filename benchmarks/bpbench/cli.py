@@ -124,6 +124,14 @@ def _add_task_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--selection", choices=("even", "first"), default=None,
                         help='"even" spreads the cap across the instance range, '
                              '"first" takes the smallest')
+    parser.add_argument("--instance-selection", default=None,
+                        help='restrict the classical track (and the derived '
+                             'oversubscription track) to a fixed instance list: '
+                             '"paper" for the paper experiments\' selection, '
+                             '"none" to disable, or a file with one '
+                             '"(year, domain, instance)" key per line. Numeric '
+                             'tasks always run in full. Default: the experiment '
+                             'setting (discover: none)')
 
 
 # ----------------------------------------------------------------------
@@ -145,7 +153,8 @@ def _discover(args) -> int:
     selected = tasks_module.select(
         found, args.tracks or ["classical", "numeric"],
         args.domains or [], args.exclude_domains or [],
-        args.max_instances_per_domain or 0, args.selection or "even")
+        args.max_instances_per_domain or 0, args.selection or "even",
+        tasks_module.load_instance_selection(args.instance_selection))
 
     if args.as_json:
         json.dump([t.to_dict() for t in selected], sys.stdout, indent=2)

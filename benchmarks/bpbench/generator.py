@@ -31,13 +31,17 @@ def collect_tasks(args, experiment: Experiment):
     tracks = args.tracks or [t for t in experiment.tracks if t != "oversubscription"]
     # oversubscription is not discovered; it reuses the classical selection.
     tracks = [t for t in dict.fromkeys(tracks) if t != "oversubscription"]
+    instance_selection = tasks_module.load_instance_selection(
+        args.instance_selection if args.instance_selection is not None
+        else experiment.instance_selection)
     selected = tasks_module.select(
         found, tracks,
         args.domains if args.domains is not None else experiment.include_domains,
         args.exclude_domains if args.exclude_domains is not None else experiment.exclude_domains,
         args.max_instances_per_domain if args.max_instances_per_domain is not None
         else experiment.max_instances_per_domain,
-        args.selection or experiment.selection)
+        args.selection or experiment.selection,
+        instance_selection)
     tasks_module.attach_resources(selected, experiment.resources_dir)
     return selected
 

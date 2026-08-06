@@ -36,6 +36,9 @@ _COMMENT_RE = re.compile(r";[^\n]*")
 _IPC_YEAR_RE = re.compile(r"ipc[-_]?(\d{4})", re.IGNORECASE)
 _TRAILING_NUM_RE = re.compile(r"(\d+)(?!.*\d)")
 _NATURAL_RE = re.compile(r"(\d+)")
+_NUMERIC_UPDATE_RE = re.compile(
+    r"\(\s*(?:increase|decrease|assign|scale-up|scale-down)\s+\(\s*([a-z0-9_-]+)")
+_NUMERIC_COMPARE_RE = re.compile(r"\(\s*(?:<=|>=|<|>)[\s(]")
 
 
 @dataclass
@@ -69,8 +72,14 @@ def _sniff_track(domain_file: str) -> Optional[str]:
         return None
     if ":durative-action" in text or "(:process" in text or "(:event" in text:
         return None  # temporal / PDDL+: out of scope
-    if "(:functions" in text:
+    if "(:functions" not in text:
+        return "classical"
+    updated = set(_NUMERIC_UPDATE_RE.findall(text))
+    if updated - {"total-cost"} or _NUMERIC_COMPARE_RE.search(text):
         return "numeric"
+    # Functions that only ever accumulate total-cost — the IPC action-costs
+    # idiom, including static per-object cost functions like road-length —
+    # do not make the planning numeric: the task is classical.
     return "classical"
 
 
@@ -106,17 +115,23 @@ def _from_api(dirpath: str, suite: str, root: str) -> List[Task]:
         domain_name = str(entry.get("name") or os.path.basename(dirpath))
         year = entry.get("ipc")
         year = str(year) if year not in (None, "") else None
-        position = 0
+        pairs = []
         for pair in entry["problems"]:
             try:
-                domain_rel, problem_rel = pair[0], pair[1]
+                pairs.append((pair[0], pair[1]))
             except (TypeError, IndexError):
                 continue
+        # The paper experiments number an instance by its 1-based position in
+        # the api.py problem list sorted by problem path (plain string order,
+        # numbered before dropping missing files). The same numbering is
+        # reproduced here, because it is what the paper's instance-selection
+        # lists and the ru-info resource files key instances by.
+        pairs.sort(key=lambda p: p[1])
+        for number, (domain_rel, problem_rel) in enumerate(pairs, start=1):
             domain_file = os.path.join(parent, domain_rel)
             problem_file = os.path.join(parent, problem_rel)
             if not (os.path.exists(domain_file) and os.path.exists(problem_file)):
                 continue
-            position += 1
             track = _sniff_track(domain_file)
             if track is None:
                 continue
@@ -125,7 +140,7 @@ def _from_api(dirpath: str, suite: str, root: str) -> List[Task]:
                 task_id="", suite=suite, domain=domain_name, instance=instance,
                 track=track, domain_file=os.path.abspath(domain_file),
                 problem_file=os.path.abspath(problem_file), ipc_year=year,
-                instance_number=_instance_number(problem_file, position)))
+                instance_number=number))
     if not tasks:
         print(f"note: no tasks from {dirpath} "
               f"(api.py lists no existing (domain, problem) pair)", file=sys.stderr)
@@ -197,10 +212,68 @@ def discover(tasks_dirs: Sequence[str]) -> List[Task]:
     return tasks
 
 
+def paper_key(task: Task) -> str:
+    """The instance's identity in the paper experiments' selection lists:
+    ``"(ipc-year, domain, instance-number)"`` with ``None`` for non-IPC
+    domains — the exact membership string
+    paper_experiments/generate-benchmark-slurm-tasks.py tests."""
+    year = task.ipc_year if task.ipc_year is not None else "None"
+    return f"({year}, {task.domain}, {task.instance_number})"
+
+
+def load_instance_selection(spec: Optional[str]) -> Optional[set]:
+    """Resolve an instance-selection setting into a set of paper keys.
+
+    ``None``/``"none"`` disables the filter, ``"paper"`` loads the selection
+    shipped with the harness (the paper experiments' classical_instances
+    list), and anything else is read as a file with one key per line
+    (``#`` comments allowed).
+    """
+    if not spec or spec == "none":
+        return None
+    if spec == "paper":
+        from .paper_selection import CLASSICAL_INSTANCES
+        return set(CLASSICAL_INSTANCES)
+    with open(spec) as handle:
+        return {line.strip() for line in handle
+                if line.strip() and not line.lstrip().startswith("#")}
+
+
 def select(tasks: List[Task], tracks: Sequence[str], include: Sequence[str],
-           exclude: Sequence[str], cap: int, selection: str) -> List[Task]:
-    """Filter by track and domain patterns, then cap instances per domain."""
+           exclude: Sequence[str], cap: int, selection: str,
+           instance_selection: Optional[set] = None) -> List[Task]:
+    """Filter by track and domain patterns, then cap instances per domain.
+
+    ``instance_selection`` restricts the *classical* tasks to the given paper
+    keys (one task per key); numeric tasks always pass, so a selection-driven
+    sweep runs the listed classical instances — and, since oversubscription
+    is derived from the classical selection, the listed instances there too —
+    but every numeric instance.
+    """
     chosen = [t for t in tasks if t.track in tracks]
+    if instance_selection is not None:
+        kept = [t for t in chosen if t.track != "classical"]
+        candidates: Dict[str, List[Task]] = {}
+        for task in chosen:
+            if task.track != "classical":
+                continue
+            directory = os.path.basename(os.path.dirname(task.domain_file)).lower()
+            if "adl" in directory:
+                continue  # the paper's parser skips adl directories
+            key = paper_key(task)
+            if key in instance_selection:
+                candidates.setdefault(key, []).append(task)
+        for group in candidates.values():
+            # The same (year, name) pair can exist in sibling directories
+            # (opt/sat tracks of one IPC, strips/full variants). The paper's
+            # stated intent is the strips variant; the smallest path breaks
+            # the remaining ties deterministically.
+            group.sort(key=lambda t: (
+                0 if "strips" in os.path.basename(
+                    os.path.dirname(t.domain_file)).lower() else 1,
+                t.domain_file, t.problem_file))
+            kept.append(group[0])
+        chosen = kept
     if include:
         chosen = [t for t in chosen if any(fnmatch(t.domain, p) for p in include)]
     if exclude:

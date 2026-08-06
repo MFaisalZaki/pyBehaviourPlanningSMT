@@ -25,7 +25,7 @@ run is the same script:
 ```bash
 ./setup_benchmark.sh --time-limit 30m --memory-limit 8GB \
     --tracks "classical numeric oversubscription" \
-    --max-instances 10 --k-plans "5" --partition compute --yes
+    --instance-selection paper --k-plans "5" --partition compute --yes
 ```
 
 ## What is compared
@@ -95,10 +95,31 @@ Tasks are discovered from `api.py` domain directories
 [pyPMT/numeric-domains](https://github.com/pyPMT/numeric-domains)) and from
 plain `domain.pddl + problems` directories (the repository's own
 `tutorials/pddls` works as a smoke fixture). A task's track is decided by
-reading its domain file — a `(:functions ...)` block makes it numeric —
-and temporal domains are skipped with a note. Per-instance `(:resource ...)`
-declarations are read from a
+reading its domain file: it is numeric when the domain genuinely reasons over
+numbers (a numeric comparison, or an effect updating a fluent other than
+`total-cost`), so the IPC action-costs idiom — including static cost
+functions like `road-length` — stays classical; temporal domains are skipped
+with a note. Per-instance `(:resource ...)` declarations are read from a
 `paper_experiments/data/classical-domains-ru-info` style directory.
+
+**The paper's instance selection.** The experiment's `instance-selection`
+setting (or `--instance-selection` on `discover`/`generate`) restricts the
+classical track — and with it the derived oversubscription track — to a
+fixed instance list, while the numeric track always runs every discovered
+instance. `"paper"` uses the selection of
+`paper_experiments/generate-benchmark-slurm-tasks.py`, shipped with the
+harness as `bpbench/paper_selection.py` (1076 instances over 53 domains); a
+path reads a file with one `"(year, domain, instance)"` key per line;
+`null`/`"none"` runs everything. An instance's identity is its 1-based
+position in the domain's `api.py` problem list sorted by problem path — the
+paper script's numbering, which the ru-info resource files also key by.
+Where one `(year, domain)` pair exists in several directories (the opt/sat
+tracks of an IPC, strips/full variants), `adl` directories are skipped and
+the strips variant is preferred, smallest path first, so the pick is
+deterministic. `setup_benchmark.sh` defaults to the paper selection with no
+per-domain cap: the classical and oversubscription tracks run exactly the
+paper's 1076 instances and the numeric track runs all of
+`numeric-domains`.
 
 ## Sandbox layout
 
