@@ -5,8 +5,10 @@ runs were judged by — behaviour diversity count (bdc) and behaviour max-sum
 (bmaxsum), both computed by BehaviourDiversityCounter over the returned
 k-set — as means over solved runs, and again head-to-head over the runs that
 *every* planner solved, which is the comparison the paper tables are built
-from. MISSING is counted against tasks.json, so coverage is never computed
-over a quietly smaller denominator.
+from. SOLVED means the run delivered its full quota of k judged plans;
+PARTIAL runs (fewer than k) are tallied separately and excluded from
+coverage and the means. MISSING is counted against tasks.json, so coverage
+is never computed over a quietly smaller denominator.
 """
 
 from __future__ import annotations
@@ -121,16 +123,20 @@ def analyze(args) -> int:
     for record in csv_rows:
         by_planner_track.setdefault((record["planner"], record["track"]), []).append(record)
 
-    lines.append(f"{'planner':<12}{'track':<18}{'att':>5}{'solved':>7}{'cov%':>7}"
-                 f"{'mean-bdc':>10}{'mean-bmaxsum':>14}{'mean-time':>11}")
-    lines.append("-" * 84)
+    lines.append(f"{'planner':<12}{'track':<18}{'att':>5}{'solved':>7}{'part':>6}"
+                 f"{'cov%':>7}{'mean-bdc':>10}{'mean-bmaxsum':>14}{'mean-time':>11}")
+    lines.append("-" * 90)
     for (planner, track), records in sorted(by_planner_track.items()):
+        # SOLVED means the full k plans came back; PARTIAL runs (fewer than
+        # k) are counted separately and excluded from coverage and the means.
         solved = [r for r in records if r["status"] == "SOLVED"]
+        partial = [r for r in records if r["status"] == "PARTIAL"]
         bdc_values = [r["bdc"] for r in solved if r["bdc"] is not None]
         bmaxsum_values = [r["bmaxsum"] for r in solved if r["bmaxsum"] is not None]
         times = [r["total-seconds"] for r in solved if r["total-seconds"] is not None]
         entry = {
             "attempted": len(records), "solved": len(solved),
+            "partial": len(partial),
             "coverage": round(100.0 * len(solved) / len(records), 1) if records else 0.0,
             "mean-bdc": round(statistics.mean(bdc_values), 3) if bdc_values else None,
             "mean-bmaxsum": round(statistics.mean(bmaxsum_values), 3) if bmaxsum_values else None,
@@ -141,7 +147,7 @@ def analyze(args) -> int:
             entry["statuses"][record["status"]] = entry["statuses"].get(record["status"], 0) + 1
         summary["planners"].setdefault(planner, {})[track] = entry
         lines.append(f"{planner:<12}{track:<18}{entry['attempted']:>5}{entry['solved']:>7}"
-                     f"{entry['coverage']:>7.1f}{fmt(entry['mean-bdc']):>10}"
+                     f"{entry['partial']:>6}{entry['coverage']:>7.1f}{fmt(entry['mean-bdc']):>10}"
                      f"{fmt(entry['mean-bmaxsum']):>14}{fmt(entry['mean-time']):>11}")
 
     # Head-to-head on the (task, k) pairs every planner of a track solved.

@@ -126,7 +126,8 @@ parsed), and a status:
 
 | status | meaning |
 |---|---|
-| `SOLVED` | k' ≥ 1 plans came back and were scored |
+| `SOLVED` | the full `k` plans came back, replayed and were scored |
+| `PARTIAL` | some plans came back but fewer than `k`; they are scored, yet the run counts as unsolved in coverage and the means |
 | `NO_PLANS` | the engine finished without a usable plan |
 | `TIMEOUT` / `MEMOUT` | the run's own limit fired |
 | `ERROR` | it crashed; the traceback is in `errors/` |

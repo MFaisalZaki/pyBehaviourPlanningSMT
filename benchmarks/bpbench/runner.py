@@ -298,7 +298,11 @@ def _run(args, result, engine, params, k, quality_bound, workdir, started):
         result["plans"]["lengths"] = [len(p.actions) for p in plans]
         result["plans"]["behaviours"] = behaviours
         result["plans"]["pddl"] = _plans_to_pddl(task, plans, behaviours)
-        result["status"] = "SOLVED"
+        # SOLVED means the run delivered the full quota of k judged plans;
+        # fewer (the engine exhausted the task, or the judge dropped some as
+        # inapplicable) is PARTIAL — scored all the same, but not counted as
+        # solved by the analysis.
+        result["status"] = "SOLVED" if len(plans) >= k else "PARTIAL"
     else:
         result["status"] = "NO_PLANS"
     result["times"]["score"] = round(time.time() - score_started, 3)
