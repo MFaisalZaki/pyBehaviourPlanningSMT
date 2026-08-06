@@ -1,11 +1,12 @@
 """The paper experiments' instance selection.
 
-``CLASSICAL_INSTANCES`` is extracted verbatim from
-``paper_experiments/generate-benchmark-slurm-tasks.py`` (its
-``classical_instances`` list): the instances the paper benchmarks on the
-classical track, and — since the oversubscription track reuses the classical
-selection with priced goals — on the oversubscription track too. The numeric
-track has no selection; it runs on every discovered instance.
+``CLASSICAL_INSTANCES`` is extracted verbatim from the ``classical_instances``
+list of the paper experiments' generate-benchmark-slurm-tasks.py (the retired
+``paper_experiments/`` tooling this harness replaces): the instances the paper
+benchmarks on the classical track, and — since the oversubscription track
+reuses the classical selection with priced goals — on the oversubscription
+track too. The numeric track has no selection; it runs on every discovered
+instance.
 
 Each entry is ``"(ipc-year, domain, instance-number)"``, where the year is
 ``None`` for non-IPC domains and the instance number is the 1-based position

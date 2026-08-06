@@ -7,8 +7,9 @@ attaches a utility to each goal predicate and asks for as much of it as it can
 afford, rather than demanding every goal be met.
 
 The classical rovers instance is not one of those, so this tutorial turns it
-into one the same way the paper experiments do -- see add_utility_values() in
-paper_experiments/utilities.py.
+into one the same way the paper experiments (and the bpbench harness's
+oversubscription track) do: price the goal predicates 2, 4, 6, ... in goal
+order and drop the hard goals.
 
 Run with: python tutorials/04_oversubscription_utility.py
 """

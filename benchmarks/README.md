@@ -100,14 +100,16 @@ numbers (a numeric comparison, or an effect updating a fluent other than
 `total-cost`), so the IPC action-costs idiom — including static cost
 functions like `road-length` — stays classical; temporal domains are skipped
 with a note. Per-instance `(:resource ...)` declarations are read from a
-`paper_experiments/data/classical-domains-ru-info` style directory.
+resources directory — [`data/`](data/) ships both paper datasets,
+`classical-domains-ru-info` for the classical `ru` dimension and
+`functions-domains-info` for the numeric `fn` one, and the setup script
+points the experiment at it.
 
 **The paper's instance selection.** The experiment's `instance-selection`
 setting (or `--instance-selection` on `discover`/`generate`) restricts the
 classical track — and with it the derived oversubscription track — to a
 fixed instance list, while the numeric track always runs every discovered
-instance. `"paper"` uses the selection of
-`paper_experiments/generate-benchmark-slurm-tasks.py`, shipped with the
+instance. `"paper"` uses the paper experiments' selection, shipped with the
 harness as `bpbench/paper_selection.py` (1076 instances over 53 domains); a
 path reads a file with one `"(year, domain, instance)"` key per line;
 `null`/`"none"` runs everything. An instance's identity is its 1-based

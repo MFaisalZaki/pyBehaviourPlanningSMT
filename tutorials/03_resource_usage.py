@@ -28,7 +28,7 @@ resourcesfile = os.path.join(pddls_dir, 'resources.txt')
 # no action are dropped. Unlike the 'fn' dimension, 'ru' only ever reads the
 # name: the three numbers are required by the parser but never used, which is
 # why the repository's own resource data under
-# paper_experiments/data/classical-domains-ru-info carries them in a different
+# benchmarks/data/classical-domains-ru-info carries them in a different
 # order and still works.
 
 task = PDDLReader().parse_problem(domainfile, problemfile)

@@ -38,8 +38,12 @@ Expression::Expression(const pb::Expression& pb_expression, const Problem* probl
         for (int i = 0; i < pb_expression.list_size(); ++i) {
             const auto& pb_expr = pb_expression.list(i);
             
-            // For the first element in function applications, apply operator mapping
-            if (i == 0 && kind_ == Kind::FUNCTION_APPLICATION && pb_expr.has_atom() && pb_expr.atom().has_symbol()) {
+            // For the first element in function applications, apply operator mapping.
+            // The oneof case check works on every protobuf version, unlike the
+            // has_symbol() accessor, which older protoc releases do not generate
+            // for oneof members.
+            if (i == 0 && kind_ == Kind::FUNCTION_APPLICATION && pb_expr.has_atom() &&
+                pb_expr.atom().content_case() == pb::Atom::kSymbol) {
                 // Create a modified protobuf expression with mapped operator
                 pb::Expression modified_pb_expr = pb_expr;
                 std::string original_symbol = pb_expr.atom().symbol();

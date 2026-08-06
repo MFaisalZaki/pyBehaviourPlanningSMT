@@ -36,7 +36,7 @@ fluents, one rover, four waypoints and three goal predicates. It minimises
 with instance 3, which has two rovers, so a plan has a real choice about how
 much of the fleet to use. Its `resources.txt` lists both rovers for the `ru`
 dimension, matching the instance 3 entry in
-`paper_experiments/data/classical-domains-ru-info/rovers/rovers-2006.json`.
+`benchmarks/data/classical-domains-ru-info/rovers/rovers-2006.json`.
 Tutorials 3, 4 and 6 use it.
 
 See the [main README](../README.md) for the full list of dimensions and options.

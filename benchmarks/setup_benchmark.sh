@@ -84,9 +84,11 @@ mkdir -p "$HERE/benchmark-tasks"
         "$HERE/benchmark-tasks/numeric-domains"
 
 echo "== experiment =="
+# benchmarks/data carries both resource datasets: classical-domains-ru-info
+# for the ru dimension and functions-domains-info for the numeric fn one.
 bpbench init --exp-dir "$HERE/experiment" \
     --time-limit "$TIME_LIMIT" --memory-limit "$MEMORY_LIMIT" \
-    --resources-dir "$REPO_ROOT/paper_experiments/data/classical-domains-ru-info"
+    --resources-dir "$HERE/data"
 
 # stamp the requested tracks / selection / k values / cap into exp-details.json
 python3 - "$HERE/experiment/exp-details.json" "$TRACKS" "$MAX_INSTANCES" "$K_PLANS" "$QUALITY_BOUND" "$PARTITION" "$INSTANCE_SELECTION" <<'PYEOF'

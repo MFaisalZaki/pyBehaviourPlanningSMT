@@ -55,14 +55,15 @@ DEFAULT_EXP_DETAILS = {
         "exclude-domains": [],
         # Restrict the classical track (and the oversubscription track derived
         # from it) to a fixed instance list: null runs everything, "paper"
-        # uses the selection of paper_experiments/generate-benchmark-slurm-
-        # tasks.py shipped with the harness, and a path reads one
+        # uses the paper experiments' selection shipped with the harness
+        # (bpbench/paper_selection.py), and a path reads one
         # "(year, domain, instance)" key per line. Numeric tasks always run
         # in full, whatever this is set to.
         "instance-selection": None,
         # Directory with per-instance (:resource ...) declarations in the
         # classical-domains-ru-info JSON layout; null disables the ru/fn
-        # dimensions. paper_experiments/data/classical-domains-ru-info works.
+        # dimensions. benchmarks/data holds both paper datasets (classical ru
+        # and numeric fn declarations).
         "resources-dir": None,
     },
 }

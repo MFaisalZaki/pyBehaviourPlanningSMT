@@ -186,7 +186,7 @@ The `ru` dimension reads a resources file, one entry per line with the syntax `(
 (:resource rover1 0 100 5)
 (:resource rover2 0 100 5)
 ```
-`NAME` is matched as a substring against the grounded action names, and entries matching no action are dropped. `ru` reads nothing but the name: the three numbers are required by the parser and then ignored, which is why the resource data under `paper_experiments/data/classical-domains-ru-info` gives them in a different order and still works.
+`NAME` is matched as a substring against the grounded action names, and entries matching no action are dropped. `ru` reads nothing but the name: the three numbers are required by the parser and then ignored, which is why the resource data under `benchmarks/data/classical-domains-ru-info` gives them in a different order and still works.
 
 The `fn` dimension reads a functions file, which uses the `:function` keyword and names a numeric fluent of the task: `(:function NAME MINVALUE MAXVALUE STEPSIZE)`. For the numeric rover domain:
 ```

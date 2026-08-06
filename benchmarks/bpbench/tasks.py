@@ -215,8 +215,8 @@ def discover(tasks_dirs: Sequence[str]) -> List[Task]:
 def paper_key(task: Task) -> str:
     """The instance's identity in the paper experiments' selection lists:
     ``"(ipc-year, domain, instance-number)"`` with ``None`` for non-IPC
-    domains — the exact membership string
-    paper_experiments/generate-benchmark-slurm-tasks.py tests."""
+    domains — the exact membership string the paper experiments' retired
+    generate-benchmark-slurm-tasks.py tested."""
     year = task.ipc_year if task.ipc_year is not None else "None"
     return f"({year}, {task.domain}, {task.instance_number})"
 
@@ -331,12 +331,11 @@ def attach_resources(tasks: List[Task], resources_dir: Optional[str]) -> None:
                     continue
 
     for task in tasks:
+        # Strict (domain, year) matching only: both shipped datasets key their
+        # files exactly (classical ru-info by IPC year, numeric fn-info by
+        # 'None'), and a looser same-name fallback would cross-attach numeric
+        # declarations to classical tasks of the same domain name.
         instances = index.get((task.domain, str(task.ipc_year)))
-        if instances is None:
-            # A domain benchmarked outside its IPC year still matches when the
-            # ru-info set declares exactly one year for it.
-            candidates = [v for (domain, _y), v in index.items() if domain == task.domain]
-            instances = candidates[0] if len(candidates) == 1 else None
         if instances is not None:
             task.resources = instances.get(str(task.instance_number))
         if task.resources is None and task.domain in plain:
