@@ -19,7 +19,35 @@ harness, [BehaviourDiversityCounter](https://github.com/MFaisalZaki/BehaviourDiv
 and [ForbidIterative](https://github.com/MFaisalZaki/forbiditerative), clones
 and builds [SymK](https://github.com/speckdavid/symk), clones the benchmark
 repositories, writes an experiment with the limits you gave, and generates
-the slurm job arrays. Every prompt also has a flag, so a scripted
+the slurm job arrays.
+
+## Running through Apptainer
+
+On a cluster where the toolchain is not yours to choose (a protobuf too old
+to generate the accessors the C++ core is compiled against, say), put the
+whole stack in a container instead:
+
+```bash
+cd benchmarks
+./setup_benchmark.sh --apptainer-image bpbench.sif --yes
+```
+
+If `bpbench.sif` does not exist it is built from
+[`Apptainer.def`](Apptainer.def): one image holding the planner and its C++
+core (compiled against the image's own pinned protobuf), the harness, the
+judge, ForbidIterative and SymK. The host keeps only the task data and the
+sandbox; every generated solve command wraps itself in
+`apptainer exec --cleanenv --bind ...`, and the sbatch scripts
+`module load apptainer`, so the compute nodes need nothing else installed.
+
+The pieces also work separately: build the image once with
+`apptainer build bpbench.sif Apptainer.def`, and pass
+`--apptainer-image bpbench.sif` to `bpbench generate` (or set
+`cfgs.apptainer-image` in `exp-details.json`; the flag value `none` forces
+plain commands). The generated commands bind the sandbox, the experiment
+and the task repositories; anything living elsewhere can be added through
+`APPTAINER_BINDPATH`. Rebuild the image to pick up new planner commits —
+it clones the `c++` branch at build time. Every prompt also has a flag, so a scripted
 run is the same script:
 
 ```bash

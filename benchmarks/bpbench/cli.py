@@ -66,6 +66,11 @@ def _build_parser() -> argparse.ArgumentParser:
                           help="where commands, results and logs are written")
     _add_task_arguments(generate)
     generate.add_argument("--venv-dir", help="virtualenv the commands should activate")
+    generate.add_argument("--apptainer-image", default=None,
+                          help="run every solve command through `apptainer exec` "
+                               "on this image (benchmarks/Apptainer.def builds one); "
+                               '"none" forces plain commands. Default: the '
+                               "experiment's cfgs.apptainer-image setting")
     generate.add_argument("--skip-existing", action="store_true",
                           help="skip runs that already have a result (resume a sweep)")
     generate.add_argument("--local-jobs", type=int, default=4,

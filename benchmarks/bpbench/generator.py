@@ -91,8 +91,22 @@ def generate(args) -> int:
                     handle.write(task.resources)
                 resource_files[task.task_id] = path
 
+    # Solve commands run either through an Apptainer image (the compute node
+    # needs nothing but apptainer), inside a virtualenv, or bare.
+    image = args.apptainer_image if args.apptainer_image is not None \
+        else experiment.apptainer_image
+    if image == "none":
+        image = None
     activate = ""
-    if args.venv_dir:
+    if image:
+        binds = {sandbox, os.path.abspath(args.exp_dir)}
+        for spec in args.tasks_dir:
+            _label, _, path = spec.rpartition("=")
+            binds.add(os.path.abspath(path or spec))
+        activate = (f"apptainer exec --cleanenv "
+                    f"--bind {shlex.quote(','.join(sorted(binds)))} "
+                    f"{shlex.quote(os.path.abspath(image))} ")
+    elif args.venv_dir:
         activate = f". {shlex.quote(os.path.abspath(args.venv_dir))}/bin/activate && "
 
     total_commands = 0
@@ -135,7 +149,8 @@ def generate(args) -> int:
             handle.write("\n".join(lines) + "\n")
         command_files.append(path)
         total_commands += len(lines)
-        _write_sbatch(sandbox, experiment, planner["planner-tag"], len(lines))
+        _write_sbatch(sandbox, experiment, planner["planner-tag"], len(lines),
+                      uses_apptainer=bool(image))
 
     _write_submit_all(sandbox)
     _write_run_local(sandbox, args.local_jobs)
@@ -148,7 +163,8 @@ def generate(args) -> int:
     return 0
 
 
-def _write_sbatch(sandbox: str, experiment: Experiment, tag: str, count: int) -> None:
+def _write_sbatch(sandbox: str, experiment: Experiment, tag: str, count: int,
+                  uses_apptainer: bool = False) -> None:
     slurm = experiment.slurm
     time_limit = seconds_to_slurm(experiment.time_limit + experiment.slurm_time_headroom)
     memory = experiment.memory_limit + experiment.slurm_memory_headroom
@@ -168,8 +184,12 @@ def _write_sbatch(sandbox: str, experiment: Experiment, tag: str, count: int) ->
     if slurm.get("account"):
         lines.append(f"#SBATCH --account={slurm['account']}")
     lines.extend(slurm.get("extra-directives") or [])
+    lines.append("")
+    if uses_apptainer:
+        # Clusters commonly ship apptainer as a module; loading it is a no-op
+        # where it is already on PATH.
+        lines.append("module load apptainer 2>/dev/null || true")
     lines += [
-        "",
         f"mkdir -p {sandbox}/slurm/logs",
         f'CMD=$(sed -n "${{SLURM_ARRAY_TASK_ID}}p" {sandbox}/cmds/{tag}.txt)',
         'eval "$CMD"',

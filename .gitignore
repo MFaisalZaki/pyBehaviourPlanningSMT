@@ -211,5 +211,6 @@ benchmarks/venv/
 benchmarks/sandbox*/
 benchmarks/benchmark-tasks/
 benchmarks/symk/
+benchmarks/*.sif
 benchmarks/experiment/
 benchmarks/bpbench.egg-info/

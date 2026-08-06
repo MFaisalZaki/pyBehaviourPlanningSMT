@@ -1,0 +1,77 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# The bpbench benchmark image: the FBI planner (C++ core built against the
+# image's own pinned protobuf), the harness, the BehaviourDiversityCounter
+# judge, ForbidIterative and SymK — everything a `bpbench solve` needs, so a
+# cluster node only has to bind-mount the sandbox and the task files.
+#
+#   apptainer build benchmarks/bpbench.sif benchmarks/Apptainer.def
+#   apptainer exec bpbench.sif bpbench --version
+#
+# setup_benchmark.sh --apptainer-image benchmarks/bpbench.sif does the build
+# and generates a sweep whose commands run through the image.
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential cmake git ca-certificates \
+        protobuf-compiler libprotobuf-dev \
+        python3 python3-venv python3-dev \
+        autoconf automake
+    rm -rf /var/lib/apt/lists/*
+
+    python3 -m venv /opt/venv
+    . /opt/venv/bin/activate
+    pip install --no-cache-dir --upgrade pip
+
+    # The planner and its C++ core, compiled against the image's protobuf —
+    # the whole point of the container: one toolchain, everywhere.
+    git clone --depth 1 --branch c++ \
+        https://github.com/MFaisalZaki/pyBehaviourPlanningSMT.git /opt/fbismt
+    pip install --no-cache-dir -e /opt/fbismt
+    (cd /opt/fbismt && python build.py)
+
+    # The harness, the judge, and ForbidIterative (compiles its Fast Downward).
+    pip install --no-cache-dir -e /opt/fbismt/benchmarks
+    pip install --no-cache-dir \
+        "git+https://github.com/MFaisalZaki/BehaviourDiversityCounter.git"
+    pip install --no-cache-dir \
+        "git+https://github.com/MFaisalZaki/forbiditerative.git"
+
+    # SymK, the oversubscription baseline.
+    git clone --depth 1 https://github.com/speckdavid/symk.git /opt/symk
+    (cd /opt/symk && python build.py release)
+
+%environment
+    export PATH=/opt/venv/bin:$PATH
+    export SYMK_HOME=/opt/symk
+    export LC_ALL=C.UTF-8
+
+%runscript
+    exec bpbench "$@"
+
+%test
+    bpbench --version
+    /opt/fbismt/behaviour_planning_smt/cpp/build/bp_planner --list-dimensions
+    python -c "import behaviour_diversity_counter, forbiditerative"
+    test -x /opt/symk/builds/release/bin/downward
+
+%labels
+    org.opencontainers.image.title bpbench
+    org.opencontainers.image.source https://github.com/MFaisalZaki/pyBehaviourPlanningSMT
+
+%help
+    Benchmark image for pyBehaviourPlanningSMT (bpbench).
+
+    Run any harness stage through the image, binding the paths the commands
+    reference (the sandbox, the experiment and the benchmark repositories):
+
+        apptainer exec --cleanenv --bind <benchmarks-dir> bpbench.sif \
+            bpbench generate --exp-dir ... --sandbox-dir ...
+
+    `bpbench generate --apptainer-image bpbench.sif ...` writes solve
+    commands that wrap themselves in `apptainer exec`, so slurm nodes need
+    nothing installed beyond apptainer itself.

@@ -32,6 +32,10 @@ DEFAULT_EXP_DETAILS = {
     "cfgs": {
         "timelimit": "00:30:00",
         "memorylimit": "8GB",
+        # Path to an Apptainer image (benchmarks/Apptainer.def builds one);
+        # when set, every generated solve command runs through
+        # `apptainer exec`, so the compute nodes need nothing installed.
+        "apptainer-image": None,
         "slurm-time-headroom": "00:05:00",
         "slurm-memory-headroom": "1GB",
         "slurm": {
@@ -181,6 +185,7 @@ class Experiment:
         self.memory_limit = parse_memory_limit(cfgs.get("memorylimit"))
         self.slurm_time_headroom = parse_time_limit(cfgs.get("slurm-time-headroom", "00:05:00"))
         self.slurm_memory_headroom = parse_memory_limit(cfgs.get("slurm-memory-headroom", "1GB"))
+        self.apptainer_image = cfgs.get("apptainer-image")
         self.slurm = {**DEFAULT_EXP_DETAILS["cfgs"]["slurm"], **cfgs.get("slurm", {})}
 
         tasks = {**DEFAULT_EXP_DETAILS["tasks"], **self.details.get("tasks", {})}
